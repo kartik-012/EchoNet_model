@@ -1,0 +1,32 @@
+
+========================================================================================
+                   AI-POWERED ECHOCARDIOGRAPHY CLINICAL REPORT
+========================================================================================
+PATIENT IDENTIFIER : PATIENT0051
+EXAMINATION VIEW   : Apical 4-Chamber (A4C) Transthoracic Ultrasound
+AI PIPELINE        : nnU-Net Self-Configuring Baseline + Simpson's Biometric Integration
+
+----------------------------------------------------------------------------------------
+[1] HEMODYNAMIC VOLUMETRIC PARAMETERS:
+----------------------------------------------------------------------------------------
+  • End-Diastolic Volume (EDV) : 172.5 mL
+  • End-Systolic Volume (ESV)  : 98.6 mL
+  • Stroke Volume (SV)         : 74.0 mL
+  • AI-Estimated Ejection Fraction: 42.9%
+  • Ground Truth Reference EF  : 29.0%
+  • Inter-Method Agreement     : 13.9% variance
+
+----------------------------------------------------------------------------------------
+[2] CLINICAL INTERPRETATION & DIAGNOSIS:
+----------------------------------------------------------------------------------------
+  • Diagnostic Status: [BORDERLINE] Heart Failure with Mildly Reduced Ejection Fraction (HFmrEF)
+  • Clinical Severity: MILD-TO-MODERATE DYSFUNCTION
+  • Recommendation   : Clinical correlation recommended. Monitor for ischemic triggers and reassess in 3-6 months.
+
+----------------------------------------------------------------------------------------
+[3] TECHNICAL AUDIT & REASONING:
+----------------------------------------------------------------------------------------
+  • LV Cavity Delineation : Automated contouring via nnU-Net (Dice: 92.56%)
+  • Contraction Symmetry  : Verified beat-to-beat volumetric derivative
+  • Quality Control Check : PASSED (Continuous cyclic derivative confirmed)
+========================================================================================

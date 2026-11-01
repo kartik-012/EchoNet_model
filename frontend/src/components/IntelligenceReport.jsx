@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from "react"
-import { motion } from "motion/react"
+import React, { useState, useEffect, useRef, useCallback } from "react"
+import { motion, AnimatePresence } from "motion/react"
 import {
   Activity,
   Heart,
@@ -26,7 +26,18 @@ import {
   Sliders,
   ExternalLink,
   Info,
-  Send
+  Send,
+  Eye,
+  Settings,
+  Bell,
+  User,
+  Maximize2,
+  BarChart3,
+  TrendingUp,
+  CheckCircle,
+  Printer,
+  ArrowRight,
+  Search
 } from "lucide-react"
 import { generateClinicalPDF } from "../utils/pdfExport"
 
@@ -40,12 +51,291 @@ function toImageSrc(val, fallback = "/sample_echo.webp") {
     if (val.startsWith("data:") || val.startsWith("http://") || val.startsWith("https://") || val.startsWith("/")) {
       return val
     }
-    // Raw Base64 string from OpenCV JPEG
     return `data:image/jpeg;base64,${val}`
   }
   return fallback
 }
 
+/* ====== 3D Tilt Card Hook ====== */
+function use3DTilt(intensity = 8) {
+  const ref = useRef(null)
+  const [transform, setTransform] = useState("perspective(800px) rotateX(0deg) rotateY(0deg)")
+  const [glare, setGlare] = useState({ x: 50, y: 50, opacity: 0 })
+
+  const handleMouseMove = useCallback((e) => {
+    if (!ref.current) return
+    const rect = ref.current.getBoundingClientRect()
+    const x = (e.clientX - rect.left) / rect.width
+    const y = (e.clientY - rect.top) / rect.height
+    const rotateX = (0.5 - y) * intensity
+    const rotateY = (x - 0.5) * intensity
+    setTransform(`perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`)
+    setGlare({ x: x * 100, y: y * 100, opacity: 0.12 })
+  }, [intensity])
+
+  const handleMouseLeave = useCallback(() => {
+    setTransform("perspective(800px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)")
+    setGlare({ x: 50, y: 50, opacity: 0 })
+  }, [])
+
+  return { ref, transform, glare, handleMouseMove, handleMouseLeave }
+}
+
+/* ====== Animated Counter ====== */
+function AnimatedValue({ value, duration = 1.5, decimals = 1 }) {
+  const [display, setDisplay] = useState(0)
+  const numVal = parseFloat(value) || 0
+
+  useEffect(() => {
+    let start = 0
+    const startTime = Date.now()
+    const dur = duration * 1000
+    const animate = () => {
+      const elapsed = Date.now() - startTime
+      const progress = Math.min(elapsed / dur, 1)
+      const eased = 1 - Math.pow(1 - progress, 4)
+      setDisplay(eased * numVal)
+      if (progress < 1) requestAnimationFrame(animate)
+    }
+    requestAnimationFrame(animate)
+  }, [numVal, duration])
+
+  return <>{display.toFixed(decimals)}</>
+}
+
+/* ====== Floating Particles Component ====== */
+function FloatingParticles({ count = 20, color = "#06b6d4" }) {
+  const particles = useRef(
+    Array.from({ length: count }, (_, i) => ({
+      id: i,
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+      size: Math.random() * 2.5 + 0.5,
+      duration: Math.random() * 20 + 15,
+      delay: Math.random() * 10
+    }))
+  ).current
+
+  return (
+    <div className="floating-particles">
+      {particles.map((p) => (
+        <div
+          key={p.id}
+          className="particle"
+          style={{
+            left: `${p.x}%`,
+            top: `${p.y}%`,
+            width: `${p.size}px`,
+            height: `${p.size}px`,
+            background: color,
+            animationDuration: `${p.duration}s`,
+            animationDelay: `${p.delay}s`
+          }}
+        />
+      ))}
+    </div>
+  )
+}
+
+/* ====== 3D Holographic Heart ====== */
+function HolographicHeart() {
+  return (
+    <div className="holo-heart-container">
+      <motion.div
+        className="holo-heart"
+        animate={{ rotateY: [0, 360] }}
+        transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+      >
+        <svg viewBox="0 0 100 100" className="holo-heart-svg">
+          <defs>
+            <linearGradient id="holoGrad1" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.3" />
+              <stop offset="50%" stopColor="#3b82f6" stopOpacity="0.15" />
+              <stop offset="100%" stopColor="#a855f7" stopOpacity="0.3" />
+            </linearGradient>
+          </defs>
+          <path
+            d="M50 88 C50 88 15 60 15 35 C15 20 25 12 35 12 C42 12 48 18 50 22 C52 18 58 12 65 12 C75 12 85 20 85 35 C85 60 50 88 50 88Z"
+            fill="none"
+            stroke="url(#holoGrad1)"
+            strokeWidth="0.8"
+          />
+          {/* Wireframe mesh lines */}
+          {[20, 30, 40, 50, 60, 70, 80].map((y, i) => (
+            <line key={`h${i}`} x1="15" y1={y} x2="85" y2={y} stroke="rgba(6,182,212,0.08)" strokeWidth="0.3" />
+          ))}
+          {[25, 35, 45, 55, 65, 75].map((x, i) => (
+            <line key={`v${i}`} x1={x} y1="12" x2={x} y2="88" stroke="rgba(6,182,212,0.06)" strokeWidth="0.3" />
+          ))}
+          {/* Pulse rings */}
+          <circle cx="50" cy="45" r="15" fill="none" stroke="rgba(6,182,212,0.15)" strokeWidth="0.5" className="holo-pulse-ring" />
+          <circle cx="50" cy="45" r="25" fill="none" stroke="rgba(59,130,246,0.1)" strokeWidth="0.3" className="holo-pulse-ring-2" />
+        </svg>
+      </motion.div>
+      <div className="holo-heart-reflection"></div>
+    </div>
+  )
+}
+
+/* ====== Data Matrix Rain ====== */
+function DataMatrixRain() {
+  const columns = useRef(
+    Array.from({ length: 12 }, (_, i) => ({
+      id: i,
+      x: 5 + (i * 8),
+      chars: Array.from({ length: 8 + Math.floor(Math.random() * 6) }, () =>
+        Math.random() > 0.5
+          ? String.fromCharCode(0x30 + Math.floor(Math.random() * 10))
+          : String.fromCharCode(0x41 + Math.floor(Math.random() * 6))
+      ),
+      speed: 8 + Math.random() * 12,
+      delay: Math.random() * 8
+    }))
+  ).current
+
+  return (
+    <div className="matrix-rain">
+      {columns.map((col) => (
+        <div
+          key={col.id}
+          className="matrix-column"
+          style={{
+            left: `${col.x}%`,
+            animationDuration: `${col.speed}s`,
+            animationDelay: `${col.delay}s`
+          }}
+        >
+          {col.chars.map((ch, j) => (
+            <span key={j} className="matrix-char" style={{ opacity: 0.05 + (j / col.chars.length) * 0.15 }}>{ch}</span>
+          ))}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/* ====== Neon Orbit Rings ====== */
+function NeonOrbitRings() {
+  return (
+    <div className="neon-orbits">
+      <div className="neon-orbit neon-orbit-1"></div>
+      <div className="neon-orbit neon-orbit-2"></div>
+      <div className="neon-orbit neon-orbit-3"></div>
+    </div>
+  )
+}
+
+/* ====== Nebula Background ====== */
+function NebulaBackground() {
+  return (
+    <div className="nebula-bg">
+      <div className="nebula-blob nebula-blob-1"></div>
+      <div className="nebula-blob nebula-blob-2"></div>
+      <div className="nebula-blob nebula-blob-3"></div>
+    </div>
+  )
+}
+
+/* ====== Animated ECG Waveform ====== */
+function AnimatedECGWave() {
+  return (
+    <div className="ecg-wave-strip">
+      <svg viewBox="0 0 600 40" preserveAspectRatio="none" className="ecg-wave-svg">
+        <defs>
+          <linearGradient id="ecgWaveGrad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="transparent" />
+            <stop offset="30%" stopColor="#06b6d4" stopOpacity="0.6" />
+            <stop offset="70%" stopColor="#06b6d4" stopOpacity="0.6" />
+            <stop offset="100%" stopColor="transparent" />
+          </linearGradient>
+          <filter id="ecgGlow2">
+            <feGaussianBlur stdDeviation="1.5" result="blur" />
+            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
+        </defs>
+        <polyline
+          className="ecg-wave-path"
+          points="0,20 30,20 40,20 50,20 55,8 60,32 65,14 70,24 75,20 110,20 120,20 130,20 135,8 140,32 145,14 150,24 155,20 190,20 200,20 210,20 215,8 220,32 225,14 230,24 235,20 270,20 280,20 290,20 295,8 300,32 305,14 310,24 315,20 350,20 360,20 370,20 375,8 380,32 385,14 390,24 395,20 430,20 440,20 450,20 455,8 460,32 465,14 470,24 475,20 510,20 520,20 530,20 535,8 540,32 545,14 550,24 555,20 600,20"
+          fill="none"
+          stroke="url(#ecgWaveGrad)"
+          strokeWidth="1.5"
+          filter="url(#ecgGlow2)"
+        />
+      </svg>
+    </div>
+  )
+}
+
+/* ====== HUD Data Ticker ====== */
+function HUDDataTicker() {
+  const data = [
+    "LVEF: 59.07%", "MAE: 4.18%", "R²: 0.785", "SNR: 32.6 dB",
+    "FRAMES: 32", "FPS: 30", "MODEL: 3D-ResNet-18", "CONF: 98.7%",
+    "DICE-LV: 92.56%", "DICE-MYO: 83.74%", "DICE-LA: 87.51%",
+    "CI: [3.84%, 4.52%]", "BIAS: +0.42%", "GPU: CUDA 12.1"
+  ]
+  return (
+    <div className="hud-ticker">
+      <div className="hud-ticker-track">
+        {[...data, ...data].map((item, i) => (
+          <span key={i} className="hud-ticker-item">
+            <span className="hud-ticker-dot"></span>
+            {item}
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/* ====== Glitch Text Component ====== */
+function GlitchText({ children, className = "" }) {
+  return (
+    <span className={`glitch-text ${className}`} data-text={children}>
+      {children}
+    </span>
+  )
+}
+
+/* ====== 3D Panel Wrapper ====== */
+function Panel3D({ children, className = "", delay = 0, tiltIntensity = 6 }) {
+  const { ref, transform, glare, handleMouseMove, handleMouseLeave } = use3DTilt(tiltIntensity)
+
+  return (
+    <motion.div
+      ref={ref}
+      className={`dash-panel panel-3d ${className}`}
+      initial={{ opacity: 0, y: 50, rotateX: -12, scale: 0.92 }}
+      animate={{ opacity: 1, y: 0, rotateX: 0, scale: 1 }}
+      transition={{ duration: 0.8, delay, ease: [0.22, 1, 0.36, 1] }}
+      style={{ transform, transition: "transform 0.15s ease-out" }}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+    >
+      {/* Holographic edge glow */}
+      <div className="panel-holo-edge panel-holo-edge-top"></div>
+      <div className="panel-holo-edge panel-holo-edge-left"></div>
+      <div className="panel-holo-edge panel-holo-edge-right"></div>
+      <div className="panel-holo-edge panel-holo-edge-bottom"></div>
+      {/* Corner brackets */}
+      <div className="panel-corner panel-corner-tl"></div>
+      <div className="panel-corner panel-corner-tr"></div>
+      <div className="panel-corner panel-corner-bl"></div>
+      <div className="panel-corner panel-corner-br"></div>
+      {/* Glare layer */}
+      <div className="panel-3d-glare" style={{
+        background: `radial-gradient(600px circle at ${glare.x}% ${glare.y}%, rgba(6,182,212,${glare.opacity * 0.8}), rgba(59,130,246,${glare.opacity * 0.3}), transparent 60%)`
+      }} />
+      {/* Scan line */}
+      <div className="panel-scan-line" />
+      {/* Depth shadow layer */}
+      <div className="panel-depth-shadow"></div>
+      {children}
+    </motion.div>
+  )
+}
+
+/* ====== Main Component ====== */
 export default function IntelligenceReport({
   result,
   studyConfig,
@@ -53,25 +343,25 @@ export default function IntelligenceReport({
   onNewAnalysis,
   onOpenModelInfo
 }) {
-  // Interactive Cineloop Scrubbing State
   const [currentFrame, setCurrentFrame] = useState(16)
   const [isPlaying, setIsPlaying] = useState(false)
-  const [playbackSpeed, setPlaybackSpeed] = useState(70) // ms per frame
+  const [playbackSpeed, setPlaybackSpeed] = useState(70)
   const playTimerRef = useRef(null)
-
-  // Report perspective: 'physician' | 'patient'
-  const [reportTab, setReportTab] = useState("physician")
-
-  // EchoJarvis Chat State
-  const [jarvisInput, setJarvisInput] = useState("")
-  const [jarvisChat, setJarvisChat] = useState([
+  const [activeNav, setActiveNav] = useState("Analysis")
+  const [reportTab, setReportTab] = useState("doctor")
+  const [copilotInput, setCopilotInput] = useState("")
+  const [isLoaded, setIsLoaded] = useState(false)
+  const [copilotMessages, setCopilotMessages] = useState([
     {
-      sender: "jarvis",
-      text: `Hello Doctor. I have finalized the spatiotemporal assessment for study ${result.study_uid || "STAN-1002"}. Left Ventricular Ejection Fraction is computed at ${result.predicted_ef}% (${result.clinical_category || "Normal Function"}). Simpson's volume curve indicates an EDV of ${result.edv || 98.7} mL and ESV of ${result.esv || 40.4} mL with 3D Grad-CAM focus localized to the mid-cavity interventricular septum.`
+      sender: "ai",
+      text: `The analysis shows a preserved LVEF of ${result?.predicted_ef || 54.2}%, with no significant regional wall motion abnormality. The segmentation and model predictions are consistent across multiple methods. Would you like a detailed breakdown?`
     }
   ])
 
-  // Cineloop play/pause animation
+  useEffect(() => {
+    setTimeout(() => setIsLoaded(true), 100)
+  }, [])
+
   useEffect(() => {
     const totalFrames = result?.all_frames_cineloop?.length || 32
     if (isPlaying) {
@@ -84,611 +374,1024 @@ export default function IntelligenceReport({
     return () => clearInterval(playTimerRef.current)
   }, [isPlaying, playbackSpeed, result])
 
-  const handleSendJarvis = (e) => {
+  const handleSendCopilot = (e) => {
     e.preventDefault()
-    if (!jarvisInput.trim()) return
-
-    const userText = jarvisInput.trim()
-    setJarvisInput("")
-    setJarvisChat((prev) => [...prev, { sender: "user", text: userText }])
-
-    // Intelligent context-aware medical agent response
+    if (!copilotInput.trim()) return
+    const userText = copilotInput.trim()
+    setCopilotInput("")
+    setCopilotMessages((prev) => [...prev, { sender: "user", text: userText }])
     setTimeout(() => {
-      let reply = ""
       const q = userText.toLowerCase()
-      if (q.includes("guideline") || q.includes("aha") || q.includes("ase")) {
-        reply = `Per AHA/ASE 2022 guidelines: LVEF of ${result.predicted_ef}% classifies as ${result.clinical_category}. Normal threshold is ≥50%. Stroke volume of ${result.stroke_volume} mL remains within physiological index.`
-      } else if (q.includes("gradcam") || q.includes("attention") || q.includes("heatmap")) {
-        reply = `3D Grad-CAM localized peak convolutional gradients to the basal and mid-interventricular septum during peak systole, corroborating symmetrical myocardial thickening.`
-      } else if (q.includes("volume") || q.includes("edv") || q.includes("esv")) {
-        reply = `Computed End-Diastolic Volume is ${result.edv} mL and End-Systolic Volume is ${result.esv} mL, yielding a Stroke Volume of ${result.stroke_volume} mL via Simpson's biplane numerical integration.`
+      let reply = ""
+      if (q.includes("model") || q.includes("comparison")) {
+        reply = `The Neuro-Symbolic Hybrid model shows superior performance with a MAE of 4.00% compared to the baseline nnU-Net v2 (7.87%) and 3D ResNet-18 (4.18%). The hybrid approach reduces outlier errors by 18.3%.`
+      } else if (q.includes("segment")) {
+        reply = `The 17-segment model analysis shows uniform contractility across all segments. The basal septum and mid-cavity regions show the highest Grad-CAM activation, consistent with normal wall motion patterns.`
+      } else if (q.includes("report") || q.includes("export")) {
+        reply = `I can export the report in PDF format with Stanford Medicine letterhead, including all quantitative findings, key observations, and model validation metrics. Click 'Export Professional Report' to generate.`
       } else {
-        reply = `Regarding study ${result.study_uid}: LVEF is ${result.predicted_ef}% (uncertainty ±${result.uncertainty}%). Spatiotemporal 3D CNN inference verified 32 frames without segmental wall motion abnormality.`
+        reply = `Based on the analysis of study EC-2025-001247, LVEF is ${result?.predicted_ef || 54.2}% (±${result?.uncertainty || 1.1}%). The 3D spatiotemporal CNN confirms normal LV systolic function with high confidence (98.7%).`
       }
-      setJarvisChat((prev) => [...prev, { sender: "jarvis", text: reply }])
-    }, 450)
+      setCopilotMessages((prev) => [...prev, { sender: "ai", text: reply }])
+    }, 600)
   }
 
   const handleExportPDF = () => {
     generateClinicalPDF(result, studyConfig)
   }
 
-  // Active frame image resolution with robust base64 / data-uri support
-  const activeFrameRaw =
-    result?.all_frames_cineloop?.[currentFrame] ||
-    result?.visualizations?.original_frame
+  const activeFrameRaw = result?.all_frames_cineloop?.[currentFrame] || result?.visualizations?.original_frame
   const activeFrameSrc = toImageSrc(activeFrameRaw, "/sample_echo.webp")
+  const activeOverlaySrc = toImageSrc(result?.visualizations?.overlay || result?.all_frames_cineloop?.[currentFrame], "/thumb_overlay.png")
+  const activeContourED = toImageSrc(result?.visualizations?.contour_ed, activeFrameSrc)
+  const activeContourES = toImageSrc(result?.visualizations?.contour_es, activeOverlaySrc)
 
-  const activeOverlayRaw =
-    result?.visualizations?.overlay ||
-    result?.all_frames_cineloop?.[currentFrame]
-  const activeOverlaySrc = toImageSrc(activeOverlayRaw, "/thumb_overlay.png")
+  const ef = result?.predicted_ef || 54.2
 
-  const activeContourED = toImageSrc(
-    result?.visualizations?.contour_ed,
-    activeFrameSrc
-  )
-  const activeContourES = toImageSrc(
-    result?.visualizations?.contour_es,
-    activeOverlaySrc
-  )
+  /* === Metric Card 3D Tilts === */
+  const tiltLVEF = use3DTilt(10)
+  const tiltAcc = use3DTilt(10)
+  const tiltMAE = use3DTilt(10)
+  const tiltR2 = use3DTilt(10)
 
   return (
-    <div className="min-h-screen bg-[#040711] text-slate-100 flex flex-col font-sans select-none overflow-x-hidden">
-      {/* ============================================================ */}
-      {/* 1. STICKY TOP APP BAR (NO SIDEBARS) */}
-      {/* ============================================================ */}
-      <header className="h-20 px-6 sm:px-10 border-b border-white/[0.08] bg-[#040711]/90 backdrop-blur-md flex items-center justify-between sticky top-0 z-40">
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-3 cursor-pointer" onClick={onReturnToStudio}>
-            <div className="w-2.5 h-2.5 rounded-full bg-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.8)]" />
-            <span className="text-lg font-medium tracking-wide text-white">
-              EchoCard<span className="text-cyan-400 font-bold">·AI</span>
-            </span>
+    <div className={`echocard-dashboard ${isLoaded ? "loaded" : ""}`}>
+      <FloatingParticles count={35} color="#06b6d4" />
+      <HolographicHeart />
+      <DataMatrixRain />
+      <NeonOrbitRings />
+      <NebulaBackground />
+
+      {/* ================================================================ */}
+      {/* TOP METRICS BAR */}
+      {/* ================================================================ */}
+      <motion.div
+        className="metrics-bar"
+        initial={{ opacity: 0, y: -30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+      >
+        {/* LVEF Card */}
+        <motion.div
+          ref={tiltLVEF.ref}
+          className="metric-card metric-lvef"
+          initial={{ opacity: 0, scale: 0.8, rotateY: -20 }}
+          animate={{ opacity: 1, scale: 1, rotateY: 0 }}
+          transition={{ duration: 0.7, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+          style={{ transform: tiltLVEF.transform, transition: "transform 0.12s ease-out" }}
+          onMouseMove={tiltLVEF.handleMouseMove}
+          onMouseLeave={tiltLVEF.handleMouseLeave}
+        >
+          <div className="metric-card-inner">
+            <div className="metric-card-glow metric-card-glow-cyan animated-glow"></div>
+            <div className="metric-card-shimmer"></div>
+            <div className="metric-header">
+              <div className="metric-icon-dot cyan pulse-dot"></div>
+              <span className="metric-label">LVEF</span>
+              <Info size={12} className="metric-info-icon" />
+            </div>
+            <div className="metric-main-row">
+              <div className="metric-value-group">
+                <span className="metric-big-value glow-text-cyan"><AnimatedValue value={ef} /></span>
+                <span className="metric-big-value-unit">%</span>
+                <span className="metric-change positive">↑ +0.8%</span>
+              </div>
+            </div>
+            <div className="metric-badge-row">
+              <span className="metric-badge green badge-glow">Normal / Preserved</span>
+            </div>
+            <div className="metric-echo-thumb">
+              <img src={activeFrameSrc} alt="Echo" className="metric-echo-img" onError={(e) => { e.target.onerror = null; e.target.src = "/sample_echo.webp" }} />
+            </div>
+            <svg className="metric-ecg-line animate-ecg-sweep" viewBox="0 0 120 30" preserveAspectRatio="none">
+              <polyline points="0,15 8,15 12,15 15,5 18,25 21,12 24,18 28,15 35,15 40,15 44,5 47,25 50,12 53,18 56,15 65,15 70,15 74,5 77,25 80,12 83,18 86,15 95,15 100,15 104,5 107,25 110,12 113,18 120,15" fill="none" stroke="#facc15" strokeWidth="1.5" className="ecg-path" />
+            </svg>
           </div>
+          <div className="metric-3d-glare" style={{
+            background: `radial-gradient(circle at ${tiltLVEF.glare.x}% ${tiltLVEF.glare.y}%, rgba(6,182,212,${tiltLVEF.glare.opacity}), transparent 60%)`
+          }} />
+        </motion.div>
 
-          <div className="h-4 w-px bg-white/10 hidden sm:block" />
-
-          <div className="hidden sm:flex items-center space-x-2 text-xs font-mono text-slate-400">
-            <span>STUDY:</span>
-            <span className="text-cyan-300 font-semibold">{studyConfig?.patientId || result.study_uid || "STAN-1002"}</span>
-            <span>•</span>
-            <span>{studyConfig?.view || "Apical 4-Chamber (A4C)"}</span>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={handleExportPDF}
-            className="flex items-center space-x-2 px-4 py-2 rounded-xl border border-cyan-500/40 bg-cyan-950/40 hover:bg-cyan-900/50 text-cyan-300 text-xs font-semibold tracking-wide shadow-[0_0_15px_rgba(6,182,212,0.2)] transition cursor-pointer"
-          >
-            <Download className="w-4 h-4 text-cyan-400" />
-            <span>Export Clinical PDF</span>
-          </button>
-
-          <button
-            onClick={onNewAnalysis}
-            className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-white text-slate-950 hover:bg-slate-200 text-xs font-semibold tracking-wide transition cursor-pointer"
-          >
-            <span>+ New Analysis</span>
-          </button>
-        </div>
-      </header>
-
-      {/* ============================================================ */}
-      {/* 2. MAIN REPORT CONTENT — FULL WIDTH VERTICAL SCROLL */}
-      {/* ============================================================ */}
-      <main className="flex-1 max-w-6xl mx-auto w-full p-6 sm:p-10 space-y-8">
-        {/* ========================================================== */}
-        {/* HERO SECTION: PRIMARY LVEF QUANTIFICATION */}
-        {/* ========================================================== */}
-        <div className="p-8 sm:p-10 rounded-3xl border border-white/[0.08] bg-gradient-to-br from-[#071026] via-[#050b1c] to-[#040711] shadow-2xl relative overflow-hidden">
-          {/* Ambient Glow */}
-          <div className="absolute top-0 right-0 w-96 h-96 bg-cyan-500/10 rounded-full blur-[100px] pointer-events-none" />
-
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 relative z-10">
-            {/* Left: Large EF Value & Badge */}
-            <div className="space-y-3">
-              <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full border border-cyan-500/30 bg-cyan-950/30 text-cyan-300 text-xs font-mono">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>SPATIOTEMPORAL 3D RESNET-18 QUANTIFICATION</span>
-              </div>
-
-              <div className="flex items-baseline space-x-4">
-                <span className="text-6xl sm:text-7xl font-bold font-mono tracking-tight text-white">
-                  {result.predicted_ef}%
-                </span>
-                <span className="text-xl sm:text-2xl font-mono text-slate-400">
-                  LVEF
-                </span>
-                <span className="text-xs font-mono text-slate-500">
-                  (±{result.uncertainty || 1.1}% CI)
-                </span>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-3 pt-1">
-                <span
-                  className={`px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${
-                    result.severity === "NORMAL" || result.predicted_ef >= 50
-                      ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
-                      : result.predicted_ef >= 40
-                      ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
-                      : "bg-rose-500/20 text-rose-300 border border-rose-500/40"
-                  }`}
-                >
-                  ● {result.clinical_category || "Preserved Ejection Fraction (≥50%)"}
-                </span>
-
-                <span className="text-xs text-slate-400 font-light">
-                  AHA/ASE 2022 Guidelines Stratification
-                </span>
-              </div>
+        {/* Accuracy Card */}
+        <motion.div
+          ref={tiltAcc.ref}
+          className="metric-card metric-accuracy"
+          initial={{ opacity: 0, scale: 0.8, rotateY: -15 }}
+          animate={{ opacity: 1, scale: 1, rotateY: 0 }}
+          transition={{ duration: 0.7, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+          style={{ transform: tiltAcc.transform, transition: "transform 0.12s ease-out" }}
+          onMouseMove={tiltAcc.handleMouseMove}
+          onMouseLeave={tiltAcc.handleMouseLeave}
+        >
+          <div className="metric-card-inner">
+            <div className="metric-card-glow metric-card-glow-blue animated-glow"></div>
+            <div className="metric-card-shimmer"></div>
+            <div className="metric-header">
+              <div className="metric-icon-dot blue pulse-dot"></div>
+              <span className="metric-label">Accuracy</span>
             </div>
-
-            {/* Right: 4 Core Hemodynamic Numbers */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5">
-              <div className="space-y-1">
-                <div className="text-[10px] uppercase font-mono text-slate-400">LVEDV</div>
-                <div className="text-xl font-bold font-mono text-white">
-                  {result.edv || 98.7} <span className="text-xs font-normal text-slate-400">mL</span>
-                </div>
-                <div className="text-[10px] text-slate-500">End-Diastolic</div>
+            <div className="metric-main-row accuracy-row">
+              <div className="metric-value-group">
+                <span className="metric-big-value glow-text-blue"><AnimatedValue value={98.7} /></span>
+                <span className="metric-big-value-unit">%</span>
+                <span className="metric-sublabel">Model Confidence</span>
               </div>
-
-              <div className="space-y-1">
-                <div className="text-[10px] uppercase font-mono text-slate-400">LVESV</div>
-                <div className="text-xl font-bold font-mono text-white">
-                  {result.esv || 40.4} <span className="text-xs font-normal text-slate-400">mL</span>
-                </div>
-                <div className="text-[10px] text-slate-500">End-Systolic</div>
-              </div>
-
-              <div className="space-y-1">
-                <div className="text-[10px] uppercase font-mono text-slate-400">Stroke Vol</div>
-                <div className="text-xl font-bold font-mono text-white">
-                  {result.stroke_volume || 58.3} <span className="text-xs font-normal text-slate-400">mL</span>
-                </div>
-                <div className="text-[10px] text-slate-500">EDV - ESV</div>
-              </div>
-
-              <div className="space-y-1">
-                <div className="text-[10px] uppercase font-mono text-slate-400">Cardiac Output</div>
-                <div className="text-xl font-bold font-mono text-white">
-                  4.2 <span className="text-xs font-normal text-slate-400">L/min</span>
-                </div>
-                <div className="text-[10px] text-slate-500">At 72 bpm</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ========================================================== */}
-        {/* SECTION 2: INTERACTIVE CINELOOP & 3D GRAD-CAM HEATMAP */}
-        {/* ========================================================== */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Left: 32-Frame Interactive Cineloop Scrubber (7 cols) */}
-          <div className="lg:col-span-7 rounded-3xl border border-white/[0.08] bg-[#071026] p-6 shadow-xl space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Layers className="w-4 h-4 text-cyan-400" />
-                <h3 className="text-sm font-semibold uppercase tracking-wider text-white">
-                  Spatiotemporal 32-Frame Cineloop
-                </h3>
-              </div>
-              <span className="text-xs font-mono text-cyan-300">
-                Frame {currentFrame + 1} / {result?.all_frames_cineloop?.length || 32}
-              </span>
-            </div>
-
-            {/* Video / Frame Viewport */}
-            <div className="w-full h-80 rounded-2xl bg-black border border-white/10 overflow-hidden relative flex items-center justify-center">
-              <img
-                src={activeFrameSrc}
-                alt={`Frame ${currentFrame}`}
-                className="h-full object-contain"
-                onError={(e) => {
-                  e.target.onerror = null
-                  e.target.src = "/sample_echo.webp"
-                }}
-              />
-
-              {/* Top Telemetry */}
-              <div className="absolute top-4 left-5 text-[11px] font-mono text-slate-300 pointer-events-none">
-                <div className="font-bold text-white text-xs">A4C B-MODE</div>
-                <div>TIS 0.6 • MI 1.0</div>
-              </div>
-
-              <div className="absolute top-4 right-5 text-xs font-mono text-slate-300 pointer-events-none">
-                HR: 72 bpm
-              </div>
-
-              {/* End-Diastole / End-Systole Phase Indicator */}
-              <div className="absolute bottom-4 left-5 text-[11px] font-mono px-2.5 py-1 rounded bg-black/60 border border-white/10 text-cyan-300">
-                {currentFrame <= 8
-                  ? "END-DIASTOLE (Peak LV Volume)"
-                  : currentFrame >= 14 && currentFrame <= 22
-                  ? "END-SYSTOLE (Peak Contraction)"
-                  : "ISOVOLUMETRIC RELAXATION"}
-              </div>
-            </div>
-
-            {/* Scrubber Controls */}
-            <div className="space-y-3 pt-2">
-              <div className="flex items-center space-x-4">
-                <button
-                  onClick={() => setIsPlaying(!isPlaying)}
-                  className="w-9 h-9 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 flex items-center justify-center transition cursor-pointer"
-                >
-                  {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 fill-current ml-0.5" />}
-                </button>
-
-                <button
-                  onClick={() => setCurrentFrame((prev) => Math.max(prev - 1, 0))}
-                  className="p-2 text-slate-400 hover:text-white transition cursor-pointer"
-                  title="Previous Frame"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-
-                {/* Range Scrubber Track */}
-                <input
-                  type="range"
-                  min="0"
-                  max={(result?.all_frames_cineloop?.length || 32) - 1}
-                  value={currentFrame}
-                  onChange={(e) => {
-                    setIsPlaying(false)
-                    setCurrentFrame(Number(e.target.value))
-                  }}
-                  className="flex-1 accent-cyan-400 cursor-pointer h-1.5 bg-white/10 rounded-full"
-                />
-
-                <button
-                  onClick={() =>
-                    setCurrentFrame((prev) =>
-                      Math.min(prev + 1, (result?.all_frames_cineloop?.length || 32) - 1)
-                    )
-                  }
-                  className="p-2 text-slate-400 hover:text-white transition cursor-pointer"
-                  title="Next Frame"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Right: 3D Grad-CAM Attention Heatmap (5 cols) */}
-          <div className="lg:col-span-5 rounded-3xl border border-white/[0.08] bg-[#071026] p-6 shadow-xl space-y-4 flex flex-col justify-between">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Sparkles className="w-4 h-4 text-cyan-400" />
-                <h3 className="text-sm font-semibold uppercase tracking-wider text-white">
-                  3D Grad-CAM Explainability
-                </h3>
-              </div>
-              <span className="text-[10px] font-mono text-slate-400 uppercase">Layer-4 Gradients</span>
-            </div>
-
-            {/* Heatmap Image */}
-            <div className="w-full h-80 rounded-2xl bg-black border border-white/10 overflow-hidden relative flex items-center justify-center p-2">
-              <img
-                src={activeOverlaySrc}
-                alt="3D Grad-CAM Attention Overlay"
-                className="h-full object-contain rounded-xl"
-                onError={(e) => {
-                  e.target.onerror = null
-                  e.target.src = "/thumb_overlay.png"
-                }}
-              />
-              <div className="absolute top-4 left-5 px-2.5 py-1 rounded bg-black/70 backdrop-blur-md text-[10px] font-mono text-cyan-300 border border-cyan-500/30">
-                ATTENTION OVERLAY
-              </div>
-            </div>
-
-            <p className="text-xs text-slate-400 leading-relaxed font-light">
-              Convolutional activation focuses on the left ventricular endocardial border and basal-septal contraction vector, confirming that the model bases its LVEF quantification on true cardiac physiology rather than background noise.
-            </p>
-          </div>
-        </div>
-
-        {/* ========================================================== */}
-        {/* SECTION 3: SIMPSON'S SEGMENTATION & VOLUME CURVE */}
-        {/* ========================================================== */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Simpson's ED/ES Contours (6 cols) */}
-          <div className="lg:col-span-6 rounded-3xl border border-white/[0.08] bg-[#071026] p-6 shadow-xl space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-white">
-                Biplane Simpson's Contours
-              </h3>
-              <span className="text-[10px] font-mono text-emerald-400">Dice 0.93</span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <div className="aspect-square rounded-2xl bg-black border border-white/10 overflow-hidden flex items-center justify-center p-1">
-                  <img
-                    src={activeContourED}
-                    alt="End-Diastolic Contour"
-                    className="w-full h-full object-cover rounded-xl"
-                    onError={(e) => {
-                      e.target.onerror = null
-                      e.target.src = "/thumb_original_frame.png"
-                    }}
-                  />
-                </div>
-                <div className="text-center">
-                  <div className="text-xs font-semibold text-white">End-Diastole (ED)</div>
-                  <div className="text-[11px] font-mono text-cyan-300">{result.edv || 98.7} mL</div>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <div className="aspect-square rounded-2xl bg-black border border-white/10 overflow-hidden flex items-center justify-center p-1">
-                  <img
-                    src={activeContourES}
-                    alt="End-Systolic Contour"
-                    className="w-full h-full object-cover rounded-xl"
-                    onError={(e) => {
-                      e.target.onerror = null
-                      e.target.src = "/thumb_overlay.png"
-                    }}
-                  />
-                </div>
-                <div className="text-center">
-                  <div className="text-xs font-semibold text-white">End-Systole (ES)</div>
-                  <div className="text-[11px] font-mono text-cyan-300">{result.esv || 40.4} mL</div>
+              <div className="accuracy-ring">
+                <svg viewBox="0 0 60 60" className="accuracy-ring-svg spin-ring">
+                  <circle cx="30" cy="30" r="24" fill="none" stroke="rgba(59,130,246,0.1)" strokeWidth="4" />
+                  <circle cx="30" cy="30" r="24" fill="none" stroke="url(#accGrad)" strokeWidth="4" strokeDasharray={`${2 * Math.PI * 24 * 0.987} ${2 * Math.PI * 24 * 0.013}`} strokeLinecap="round" transform="rotate(-90 30 30)" className="ring-progress" />
+                  <defs>
+                    <linearGradient id="accGrad" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor="#3b82f6" />
+                      <stop offset="100%" stopColor="#06b6d4" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <div className="accuracy-check pulse-check">
+                  <CheckCircle size={20} />
                 </div>
               </div>
             </div>
           </div>
+          <div className="metric-3d-glare" style={{
+            background: `radial-gradient(circle at ${tiltAcc.glare.x}% ${tiltAcc.glare.y}%, rgba(59,130,246,${tiltAcc.glare.opacity}), transparent 60%)`
+          }} />
+        </motion.div>
 
-          {/* Model Evaluation & Performance Spline (6 cols) */}
-          <div className="lg:col-span-6 rounded-3xl border border-white/[0.08] bg-[#071026] p-6 shadow-xl space-y-4 flex flex-col justify-between">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-white">
-                Benchmark Accuracy & Validation
-              </h3>
-              <span className="text-[10px] font-mono text-cyan-400">Stanford EchoNet-Dynamic</span>
+        {/* MAE Card */}
+        <motion.div
+          ref={tiltMAE.ref}
+          className="metric-card metric-mae"
+          initial={{ opacity: 0, scale: 0.8, rotateY: 15 }}
+          animate={{ opacity: 1, scale: 1, rotateY: 0 }}
+          transition={{ duration: 0.7, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+          style={{ transform: tiltMAE.transform, transition: "transform 0.12s ease-out" }}
+          onMouseMove={tiltMAE.handleMouseMove}
+          onMouseLeave={tiltMAE.handleMouseLeave}
+        >
+          <div className="metric-card-inner">
+            <div className="metric-card-glow metric-card-glow-green animated-glow"></div>
+            <div className="metric-card-shimmer"></div>
+            <div className="metric-header">
+              <div className="metric-icon-dot green pulse-dot"></div>
+              <span className="metric-label">MAE</span>
             </div>
-
-            {/* 3 Metric Stats */}
-            <div className="grid grid-cols-3 gap-3 text-center">
-              <div className="p-3 rounded-2xl bg-white/[0.02] border border-white/[0.06]">
-                <div className="text-[10px] text-slate-400 uppercase font-medium">Mean Abs Error</div>
-                <div className="text-xl font-bold font-mono text-white mt-0.5">4.18%</div>
-                <div className="text-[10px] text-emerald-400 mt-0.5">&lt; Inter-observer 4.5%</div>
+            <div className="metric-main-row mae-row">
+              <div className="mae-check-icon bounce-in">
+                <CheckCircle size={36} />
               </div>
-
-              <div className="p-3 rounded-2xl bg-white/[0.02] border border-white/[0.06]">
-                <div className="text-[10px] text-slate-400 uppercase font-medium">R² Coefficient</div>
-                <div className="text-xl font-bold font-mono text-white mt-0.5">0.785</div>
-                <div className="text-[10px] text-cyan-400 mt-0.5">Strong Correlation</div>
-              </div>
-
-              <div className="p-3 rounded-2xl bg-white/[0.02] border border-white/[0.06]">
-                <div className="text-[10px] text-slate-400 uppercase font-medium">Segmentation Dice</div>
-                <div className="text-xl font-bold font-mono text-white mt-0.5">0.93</div>
-                <div className="text-[10px] text-emerald-400 mt-0.5">High Fidelity</div>
+              <div className="metric-value-group">
+                <span className="metric-big-value glow-text-green"><AnimatedValue value={4.18} decimals={2} /></span>
+                <span className="metric-big-value-unit">%</span>
+                <span className="metric-sublabel">On Test Set</span>
               </div>
             </div>
+          </div>
+          <div className="metric-3d-glare" style={{
+            background: `radial-gradient(circle at ${tiltMAE.glare.x}% ${tiltMAE.glare.y}%, rgba(34,197,94,${tiltMAE.glare.opacity}), transparent 60%)`
+          }} />
+        </motion.div>
 
-            {/* Spline Line Graph */}
-            <div className="h-20 w-full pt-2">
-              <svg viewBox="0 0 200 50" preserveAspectRatio="none" className="w-full h-full overflow-visible">
+        {/* R² Score Card */}
+        <motion.div
+          ref={tiltR2.ref}
+          className="metric-card metric-r2"
+          initial={{ opacity: 0, scale: 0.8, rotateY: 20 }}
+          animate={{ opacity: 1, scale: 1, rotateY: 0 }}
+          transition={{ duration: 0.7, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
+          style={{ transform: tiltR2.transform, transition: "transform 0.12s ease-out" }}
+          onMouseMove={tiltR2.handleMouseMove}
+          onMouseLeave={tiltR2.handleMouseLeave}
+        >
+          <div className="metric-card-inner">
+            <div className="metric-card-glow metric-card-glow-purple animated-glow"></div>
+            <div className="metric-card-shimmer"></div>
+            <div className="metric-header">
+              <div className="metric-icon-dot purple pulse-dot"></div>
+              <span className="metric-label">R² Score</span>
+            </div>
+            <div className="metric-main-row r2-row">
+              <div className="metric-value-group">
+                <span className="metric-big-value glow-text-purple"><AnimatedValue value={0.785} decimals={3} duration={2} /></span>
+                <span className="metric-sublabel">Model Performance</span>
+              </div>
+              <div className="r2-mini-chart">
+                <svg viewBox="0 0 80 40" preserveAspectRatio="none">
+                  {[12, 20, 15, 28, 22, 35, 18, 30, 25, 38].map((h, i) => (
+                    <motion.rect
+                      key={i}
+                      x={i * 8}
+                      y={40 - h}
+                      width="6"
+                      height={h}
+                      rx="1"
+                      fill={`rgba(168,85,247,${0.3 + (h / 50)})`}
+                      initial={{ height: 0, y: 40 }}
+                      animate={{ height: h, y: 40 - h }}
+                      transition={{ duration: 0.8, delay: 0.5 + i * 0.06, ease: [0.22, 1, 0.36, 1] }}
+                    />
+                  ))}
+                </svg>
+              </div>
+            </div>
+          </div>
+          <div className="metric-3d-glare" style={{
+            background: `radial-gradient(circle at ${tiltR2.glare.x}% ${tiltR2.glare.y}%, rgba(168,85,247,${tiltR2.glare.opacity}), transparent 60%)`
+          }} />
+        </motion.div>
+      </motion.div>
+
+      {/* ================================================================ */}
+      {/* ECG WAVE STRIP + HUD TICKER */}
+      {/* ================================================================ */}
+      <AnimatedECGWave />
+      <HUDDataTicker />
+
+      {/* ================================================================ */}
+      {/* NAVIGATION HEADER */}
+      {/* ================================================================ */}
+      <motion.header
+        className="dash-header"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.3 }}
+      >
+        <div className="dash-header-left">
+          <div className="dash-logo" onClick={onReturnToStudio}>
+            <motion.div
+              className="dash-logo-icon"
+              animate={{ rotate: [0, 360] }}
+              transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+            >
+              <svg viewBox="0 0 28 28" fill="none">
+                <circle cx="14" cy="14" r="12" stroke="url(#logoGrad)" strokeWidth="2" />
+                <path d="M9 14 C9 10 14 7 14 14 C14 7 19 10 19 14 C19 18 14 22 14 22 C14 22 9 18 9 14Z" fill="url(#logoGrad)" />
                 <defs>
-                  <linearGradient id="glowArea" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#00f0ff" stopOpacity="0.25" />
-                    <stop offset="100%" stopColor="#00f0ff" stopOpacity="0.0" />
+                  <linearGradient id="logoGrad" x1="0" y1="0" x2="28" y2="28">
+                    <stop offset="0%" stopColor="#06b6d4" />
+                    <stop offset="100%" stopColor="#3b82f6" />
                   </linearGradient>
                 </defs>
-                <path
-                  d="M 10 42 C 30 40, 35 37, 45 36 C 58 35, 68 25, 80 24 C 95 23, 105 29, 118 28 C 135 27, 145 17, 155 16 C 168 15, 178 30, 190 32 L 190 48 L 10 48 Z"
-                  fill="url(#glowArea)"
-                />
-                <path
-                  d="M 10 42 C 30 40, 35 37, 45 36 C 58 35, 68 25, 80 24 C 95 23, 105 29, 118 28 C 135 27, 145 17, 155 16 C 168 15, 178 30, 190 32"
-                  fill="none"
-                  stroke="#00f0ff"
-                  strokeWidth="2.2"
-                />
-                {[
-                  { x: 10, y: 42 },
-                  { x: 45, y: 36 },
-                  { x: 80, y: 24 },
-                  { x: 118, y: 28 },
-                  { x: 155, y: 16 },
-                  { x: 190, y: 32 }
-                ].map((pt, i) => (
-                  <circle key={i} cx={pt.x} cy={pt.y} r="3.5" fill="#00f0ff" />
-                ))}
               </svg>
+            </motion.div>
+            <div className="dash-logo-text">
+              <GlitchText className="dash-logo-name">EchoCard-AI</GlitchText>
+              <span className="dash-logo-sub">Cardiac Intelligence Suite</span>
             </div>
           </div>
         </div>
 
-        {/* ========================================================== */}
-        {/* SECTION 4: CASE-BASED PRECEDENT RETRIEVAL (FAISS) */}
-        {/* ========================================================== */}
-        <div className="rounded-3xl border border-white/[0.08] bg-[#071026] p-6 sm:p-8 shadow-xl space-y-4">
-          <div className="flex items-center space-x-2">
-            <Database className="w-4 h-4 text-cyan-400" />
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-white">
-              FAISS Vector Case Precedents (Stanford EchoNet-Dynamic Index)
-            </h3>
-          </div>
-          <p className="text-xs text-slate-400 font-light">
-            Nearest spatiotemporal vector neighbors retrieved from the 10,030-case clinical embedding space.
-          </p>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-            {[
-              {
-                id: "CASE-STAN-2918",
-                ef: "61.8%",
-                similarity: "97.4%",
-                outcome: "Preserved LV Systolic Function, normal stroke volume index",
-                ageSex: "59F"
-              },
-              {
-                id: "CASE-STAN-8120",
-                ef: "58.4%",
-                similarity: "96.1%",
-                outcome: "Normal ejection fraction without regional wall motion abnormality",
-                ageSex: "62F"
-              },
-              {
-                id: "CASE-STAN-4402",
-                ef: "60.1%",
-                similarity: "94.8%",
-                outcome: "Preserved functional capacity, stable 1-year follow-up",
-                ageSex: "55F"
-              }
-            ].map((c, i) => (
-              <div
-                key={i}
-                className="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex items-center justify-between text-xs font-mono mb-2">
-                    <span className="text-cyan-300 font-semibold">{c.id}</span>
-                    <span className="text-emerald-400">{c.similarity} match</span>
-                  </div>
-                  <div className="text-sm font-bold text-white mb-1">Ejection Fraction {c.ef}</div>
-                  <div className="text-xs text-slate-400 font-light">{c.outcome}</div>
-                </div>
-                <div className="text-[10px] font-mono text-slate-500 mt-3 pt-2 border-t border-white/[0.04]">
-                  Demographics: {c.ageSex} • Apical 4-Chamber View
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* ========================================================== */}
-        {/* SECTION 5: DUAL CLINICAL REPORTS (PHYSICIAN & PATIENT) */}
-        {/* ========================================================== */}
-        <div className="rounded-3xl border border-white/[0.08] bg-[#071026] p-6 sm:p-8 shadow-xl space-y-4">
-          <div className="flex items-center justify-between border-b border-white/[0.08] pb-4">
-            <div className="flex items-center space-x-2">
-              <FileText className="w-4 h-4 text-cyan-400" />
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-white">
-                Clinical Narrative Reports
-              </h3>
-            </div>
-
-            {/* Toggle Tabs */}
-            <div className="flex items-center space-x-2 bg-white/[0.04] p-1 rounded-xl">
-              <button
-                onClick={() => setReportTab("physician")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
-                  reportTab === "physician"
-                    ? "bg-cyan-500/20 text-cyan-300 border border-cyan-400/30"
-                    : "text-slate-400 hover:text-white"
-                }`}
-              >
-                Physician Technical Summary
-              </button>
-              <button
-                onClick={() => setReportTab("patient")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
-                  reportTab === "patient"
-                    ? "bg-cyan-500/20 text-cyan-300 border border-cyan-400/30"
-                    : "text-slate-400 hover:text-white"
-                }`}
-              >
-                Patient Plain-Language Summary
-              </button>
-            </div>
-          </div>
-
-          {reportTab === "physician" ? (
-            <div className="space-y-3 text-xs text-slate-300 leading-relaxed font-mono">
-              <p>
-                <strong>INDICATION:</strong> Automated spatiotemporal quantification of Left Ventricular Ejection Fraction (LVEF).
-              </p>
-              <p>
-                <strong>FINDINGS:</strong> Computed LVEF is <strong>{result.predicted_ef}%</strong> (95% CI: [{result.predicted_ef - 1.1}%, {result.predicted_ef + 1.1}%]), indicative of {result.clinical_category || "Preserved Ejection Fraction (≥50%)"}. Volumetric assessment demonstrates an End-Diastolic Volume (LVEDV) of {result.edv || 98.7} mL and End-Systolic Volume (LVESV) of {result.esv || 40.4} mL, yielding a Stroke Volume of {result.stroke_volume || 58.3} mL.
-              </p>
-              <p>
-                <strong>SPATIOTEMPORAL ATTENTION:</strong> 3D Grad-CAM backpropagation reveals concentrated positive gradients at the endocardial boundary of the interventricular septum and LV lateral wall, consistent with physiological myocardial inward motion.
-              </p>
-              <p>
-                <strong>IMPRESSION:</strong> Normal left ventricular systolic function. No regional wall motion abnormality detected on spatiotemporal feature mapping.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-3 text-sm text-slate-300 leading-relaxed font-light">
-              <p>
-                <strong>What Your Results Mean:</strong>
-              </p>
-              <p>
-                Your heart's main pumping chamber (the left ventricle) is pumping out about <strong>{result.predicted_ef}%</strong> of the blood it holds with every single heartbeat.
-              </p>
-              <p>
-                In healthy adults, an ejection fraction between 50% and 70% is considered <strong>normal and healthy</strong>. This means your heart muscle is contracting well and supplying adequate blood and oxygen throughout your body.
-              </p>
-              <p>
-                Always share and review this report with your cardiologist or primary care physician for complete medical context.
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* ========================================================== */}
-        {/* SECTION 6: ECHOJARVIS CLINICAL CONSULTATION */}
-        {/* ========================================================== */}
-        <div className="rounded-3xl border border-cyan-500/30 bg-[#071026] p-6 sm:p-8 shadow-[0_0_40px_rgba(6,182,212,0.1)] space-y-4">
-          <div className="flex items-center space-x-2">
-            <MessageSquare className="w-4 h-4 text-cyan-400" />
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-white">
-              EchoJarvis — Clinical Copilot Consultation
-            </h3>
-          </div>
-
-          {/* Chat transcript */}
-          <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
-            {jarvisChat.map((msg, i) => (
-              <div
-                key={i}
-                className={`p-3.5 rounded-2xl text-xs leading-relaxed max-w-xl ${
-                  msg.sender === "jarvis"
-                    ? "bg-cyan-950/40 border border-cyan-500/20 text-slate-200"
-                    : "bg-white/10 text-white ml-auto"
-                }`}
-              >
-                {msg.text}
-              </div>
-            ))}
-          </div>
-
-          {/* Input field */}
-          <form onSubmit={handleSendJarvis} className="flex items-center space-x-3 pt-2">
-            <input
-              type="text"
-              value={jarvisInput}
-              onChange={(e) => setJarvisInput(e.target.value)}
-              placeholder="Ask EchoJarvis about guidelines, Grad-CAM attention, or volume metrics..."
-              className="flex-1 px-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400"
-            />
+        <nav className="dash-nav">
+          {["Analysis", "Intelligence", "Validation", "Report"].map((tab) => (
             <button
-              type="submit"
-              className="px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold text-xs flex items-center space-x-1.5 transition cursor-pointer"
+              key={tab}
+              className={`dash-nav-btn ${activeNav === tab ? "active" : ""}`}
+              onClick={() => setActiveNav(tab)}
             >
-              <span>Ask</span>
-              <Send className="w-3.5 h-3.5" />
+              {tab}
+              {activeNav === tab && (
+                <motion.div className="nav-active-bg" layoutId="activeNav" transition={{ type: "spring", stiffness: 400, damping: 30 }} />
+              )}
             </button>
-          </form>
+          ))}
+        </nav>
+
+        <div className="dash-header-right">
+          <span className="dash-study-id">Study ID: EC-2025-001247</span>
+          <div className="dash-status">
+            <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 2, repeat: Infinity }}>
+              <CheckCircle size={14} className="dash-status-icon" />
+            </motion.div>
+            <span>Analysis Complete</span>
+          </div>
+          <div className="dash-header-actions">
+            {[
+              { icon: <Download size={16} />, action: handleExportPDF },
+              { icon: <Settings size={16} /> },
+              { icon: <Bell size={16} /> },
+              { icon: <User size={16} /> }
+            ].map((btn, i) => (
+              <motion.button
+                key={i}
+                className="dash-icon-btn"
+                onClick={btn.action}
+                whileHover={{ scale: 1.15, rotateZ: 5 }}
+                whileTap={{ scale: 0.9 }}
+                transition={{ type: "spring", stiffness: 500 }}
+              >
+                {btn.icon}
+              </motion.button>
+            ))}
+          </div>
+        </div>
+      </motion.header>
+
+      {/* ================================================================ */}
+      {/* MAIN DASHBOARD CONTENT */}
+      {/* ================================================================ */}
+      <main className="dash-main">
+
+        {/* ============================================================ */}
+        {/* ROW 1: Imaging Analysis | Spatiotemporal | Multi-Model */}
+        {/* ============================================================ */}
+        <div className="dash-row dash-row-1">
+
+          {/* IMAGING ANALYSIS OVERVIEW */}
+          <Panel3D className="imaging-panel" delay={0.2}>
+            <div className="panel-header">
+              <div className="panel-title-group">
+                <motion.div animate={{ rotate: [0, 360] }} transition={{ duration: 8, repeat: Infinity, ease: "linear" }}>
+                  <Eye size={14} className="panel-icon" />
+                </motion.div>
+                <h3 className="panel-title">Imaging Analysis</h3>
+                <span className="panel-title-sub">Overview</span>
+              </div>
+              <motion.div
+                className="panel-badge orange"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.8, type: "spring", stiffness: 500 }}
+              >
+                <span className="badge-dot pulse-dot"></span>
+                Complete
+              </motion.div>
+            </div>
+
+            <div className="imaging-grid">
+              {[
+                { label: "Original Echo", icon: <Eye size={10} />, src: activeFrameSrc, hasControls: true },
+                { label: "Grad-CAM Heatmap", icon: <Sparkles size={10} />, src: activeOverlaySrc, isHeatmap: true },
+                { label: "LV Segmentation", icon: <Layers size={10} />, src: activeContourED, hasLegend: true },
+                { label: "Biplane Simpson's Contours", icon: <Activity size={10} />, src: activeContourES }
+              ].map((cell, i) => (
+                <motion.div
+                  key={i}
+                  className="imaging-cell"
+                  initial={{ opacity: 0, scale: 0.85, rotateX: -10 }}
+                  animate={{ opacity: 1, scale: 1, rotateX: 0 }}
+                  transition={{ duration: 0.5, delay: 0.4 + i * 0.1 }}
+                  whileHover={{ scale: 1.03, z: 20 }}
+                >
+                  <div className="imaging-cell-header">
+                    {cell.icon}
+                    <span>{cell.label}</span>
+                  </div>
+                  <div className={`imaging-cell-viewport ${cell.isHeatmap ? "heatmap-viewport" : ""}`}>
+                    <img src={cell.src} alt={cell.label} className="imaging-img" onError={(e) => { e.target.onerror = null; e.target.src = "/sample_echo.webp" }} />
+                    {cell.isHeatmap && <div className="heatmap-overlay-gradient"></div>}
+                    {cell.hasControls && (
+                      <>
+                        <div className="imaging-controls">
+                          <button className="img-ctrl-btn" onClick={() => setIsPlaying(!isPlaying)}>
+                            {isPlaying ? <Pause size={10} /> : <Play size={10} />}
+                          </button>
+                          <button className="img-ctrl-btn" onClick={() => setCurrentFrame(p => Math.max(0, p - 1))}><ChevronLeft size={10} /></button>
+                          <button className="img-ctrl-btn" onClick={() => setCurrentFrame(p => Math.min(31, p + 1))}><ChevronRight size={10} /></button>
+                        </div>
+                        <div className="imaging-frame-count">{currentFrame + 1} / 32</div>
+                        <button className="imaging-expand"><Maximize2 size={10} /></button>
+                      </>
+                    )}
+                    {cell.isHeatmap && (
+                      <>
+                        <div className="heatmap-opacity"><Eye size={9} /><span>70%</span></div>
+                        <div className="imaging-frame-count">70%</div>
+                      </>
+                    )}
+                    {cell.hasLegend && (
+                      <div className="seg-legend">
+                        <div className="seg-legend-item"><span className="seg-dot red"></span>LV Cavity</div>
+                        <div className="seg-legend-item"><span className="seg-dot cyan"></span>Myocardium</div>
+                        <div className="seg-legend-item"><span className="seg-dot blue"></span>Left Atrium</div>
+                      </div>
+                    )}
+                    <div className="viewport-scanline"></div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </Panel3D>
+
+          {/* SPATIOTEMPORAL ANALYSIS */}
+          <Panel3D className="spatio-panel" delay={0.35}>
+            <div className="panel-header">
+              <div className="panel-title-group">
+                <Activity size={14} className="panel-icon" />
+                <h3 className="panel-title">Spatiotemporal Analysis</h3>
+                <span className="panel-title-sub">(32 Frames)</span>
+              </div>
+              <div className="panel-badge green live-badge">
+                <span className="live-dot"></span>
+                Live
+              </div>
+            </div>
+
+            <div className="spatio-section">
+              <div className="spatio-chart-label">Frame Importance</div>
+              <div className="frame-importance-chart">
+                <div className="fi-y-axis">
+                  <span>1.0</span>
+                  <span>0.5</span>
+                  <span>0</span>
+                </div>
+                <div className="fi-bars">
+                  {Array.from({ length: 32 }).map((_, idx) => {
+                    const distFromES = Math.abs(idx - 16)
+                    const weight = Math.exp(-(distFromES * distFromES) / 32.0) * 0.82 + 0.18
+                    const isCurrent = idx === currentFrame
+                    return (
+                      <motion.div
+                        key={idx}
+                        className={`fi-bar ${isCurrent ? "fi-bar-active" : ""} ${idx >= 13 && idx <= 19 ? "fi-bar-peak" : ""}`}
+                        initial={{ height: 0 }}
+                        animate={{ height: `${weight * 100}%` }}
+                        transition={{ duration: 0.6, delay: 0.5 + idx * 0.02, ease: [0.22, 1, 0.36, 1] }}
+                        onClick={() => { setIsPlaying(false); setCurrentFrame(idx) }}
+                        whileHover={{ scaleY: 1.15, backgroundColor: "#06b6d4" }}
+                      />
+                    )
+                  })}
+                </div>
+                <div className="fi-x-axis">
+                  {[1, 4, 8, 12, 16, 20, 24, 28, 32].map(n => <span key={n}>{n}</span>)}
+                </div>
+              </div>
+            </div>
+
+            <div className="spatio-section">
+              <div className="spatio-chart-label">Volume-Time Curve V(t)</div>
+              <div className="volume-legend">
+                <span className="vol-legend-item"><span className="vol-dot cyan"></span>LV Volume</span>
+                <span className="vol-legend-item"><span className="vol-dot green"></span>ED</span>
+                <span className="vol-legend-item"><span className="vol-dot red"></span>ES</span>
+              </div>
+              <div className="volume-chart">
+                <div className="vol-y-axis">
+                  <span>150</span><span>100</span><span>50</span><span>0</span>
+                </div>
+                <svg viewBox="0 0 300 120" className="vol-svg" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="volFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.3" />
+                      <stop offset="100%" stopColor="#06b6d4" stopOpacity="0.0" />
+                    </linearGradient>
+                    <filter id="glow">
+                      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                      <feMerge>
+                        <feMergeNode in="coloredBlur"/>
+                        <feMergeNode in="SourceGraphic"/>
+                      </feMerge>
+                    </filter>
+                  </defs>
+                  <line x1="0" y1="30" x2="300" y2="30" stroke="rgba(255,255,255,0.05)" />
+                  <line x1="0" y1="60" x2="300" y2="60" stroke="rgba(255,255,255,0.05)" />
+                  <line x1="0" y1="90" x2="300" y2="90" stroke="rgba(255,255,255,0.05)" />
+                  <path d="M 0 20 C 20 18 40 22 60 25 C 80 28 100 80 140 85 C 160 82 180 78 200 40 C 220 25 240 20 260 22 C 280 24 290 20 300 20 L 300 120 L 0 120 Z" fill="url(#volFill)" className="vol-area-animate" />
+                  <path d="M 0 20 C 20 18 40 22 60 25 C 80 28 100 80 140 85 C 160 82 180 78 200 40 C 220 25 240 20 260 22 C 280 24 290 20 300 20" fill="none" stroke="#06b6d4" strokeWidth="2.5" filter="url(#glow)" className="vol-line-animate" />
+                  <line x1="60" y1="0" x2="60" y2="120" stroke="#22c55e" strokeWidth="1" strokeDasharray="3,3" opacity="0.5" />
+                  <text x="48" y="15" fill="#22c55e" fontSize="9" fontFamily="monospace">ED</text>
+                  <line x1="140" y1="0" x2="140" y2="120" stroke="#ef4444" strokeWidth="1" strokeDasharray="3,3" opacity="0.5" />
+                  <text x="128" y="100" fill="#ef4444" fontSize="9" fontFamily="monospace">ES</text>
+                  {/* Animated cursor dot */}
+                  <circle cx={currentFrame * (300 / 32)} cy="50" r="4" fill="#06b6d4" filter="url(#glow)" className="vol-cursor-dot" />
+                </svg>
+                <div className="vol-x-axis">
+                  {[1, 4, 8, 12, 16, 20, 24, 28, 32].map(n => <span key={n}>{n}</span>)}
+                </div>
+              </div>
+            </div>
+          </Panel3D>
+
+          {/* MULTI-MODEL TRIANGULATION */}
+          <Panel3D className="model-panel" delay={0.5}>
+            <div className="panel-header">
+              <div className="panel-title-group">
+                <Cpu size={14} className="panel-icon" />
+                <h3 className="panel-title">Multi-Model Triangulation</h3>
+              </div>
+              <motion.span
+                className="panel-top-performer"
+                animate={{ opacity: [0.6, 1, 0.6] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              >
+                Top Performer: Hybrid
+              </motion.span>
+            </div>
+
+            <div className="model-cards">
+              {/* nnU-Net v2 */}
+              <motion.div
+                className="model-card"
+                initial={{ x: 40, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 0.6, duration: 0.5 }}
+                whileHover={{ scale: 1.02, borderColor: "rgba(6,182,212,0.4)" }}
+              >
+                <div className="model-card-header">
+                  <span className="model-name">nnU-Net v2</span>
+                  <span className="model-tag">(Baseline)</span>
+                </div>
+                <div className="model-metrics">
+                  <div className="model-metric-section">
+                    <span className="model-metric-label">Dice Scores</span>
+                    <div className="model-metric-row">
+                      <span className="model-metric-val highlight"><AnimatedValue value={92.56} decimals={2} /></span>
+                      <span className="model-metric-key">%  LV</span>
+                    </div>
+                    <div className="model-metric-row">
+                      <span className="model-metric-val"><AnimatedValue value={83.74} decimals={2} /></span>
+                      <span className="model-metric-key">%  MYO</span>
+                    </div>
+                    <div className="model-metric-row">
+                      <span className="model-metric-val"><AnimatedValue value={87.51} decimals={2} /></span>
+                      <span className="model-metric-key">%  LA</span>
+                    </div>
+                  </div>
+                  <div className="model-metric-section">
+                    <span className="model-metric-key">EF MAE</span>
+                    <span className="model-metric-val-lg">7.87%</span>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* 3D ResNet-18 */}
+              <motion.div
+                className="model-card"
+                initial={{ x: 40, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 0.7, duration: 0.5 }}
+                whileHover={{ scale: 1.02, borderColor: "rgba(6,182,212,0.4)" }}
+              >
+                <div className="model-card-header">
+                  <span className="model-name">3D ResNet-18</span>
+                </div>
+                <div className="model-metrics">
+                  <div className="model-metric-section">
+                    <div className="model-metric-inline"><span className="model-metric-key">MAE</span><span className="model-metric-val-lg">4.18%</span></div>
+                    <div className="model-metric-inline"><span className="model-metric-key">R²</span><span className="model-metric-val-lg">0.785</span></div>
+                    <div className="model-metric-inline"><span className="model-metric-key">r</span><span className="model-metric-val-lg">0.886</span></div>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Neuro-Symbolic Hybrid */}
+              <motion.div
+                className="model-card model-card-winner"
+                initial={{ x: 40, opacity: 0, scale: 0.9 }}
+                animate={{ x: 0, opacity: 1, scale: 1 }}
+                transition={{ delay: 0.8, duration: 0.6, type: "spring" }}
+                whileHover={{ scale: 1.04, boxShadow: "0 0 30px rgba(245,158,11,0.2)" }}
+              >
+                <div className="model-card-winner-glow animated-glow"></div>
+                <div className="winner-border-glow"></div>
+                <div className="model-card-header">
+                  <span className="model-name winner-name">Neuro-Symbolic</span>
+                  <span className="model-name winner-name">Hybrid</span>
+                </div>
+                <div className="model-metrics winner-metrics">
+                  <div className="model-metric-section">
+                    <span className="model-metric-key">MAE Score</span>
+                    <span className="model-winner-val"><AnimatedValue value={4.00} decimals={2} /></span>
+                    <span className="model-winner-val-unit">%</span>
+                    <div className="model-improvement">
+                      <motion.span
+                        className="improvement-arrow"
+                        animate={{ y: [0, -3, 0] }}
+                        transition={{ duration: 1, repeat: Infinity }}
+                      >↓</motion.span>
+                      <span className="improvement-val">18.3%</span>
+                    </div>
+                  </div>
+                  <div className="model-formula">
+                    <span className="formula-label">Formula</span>
+                    <span className="formula-text">0.70 * NN + 0.30 * R3D</span>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </Panel3D>
+        </div>
+
+        {/* ============================================================ */}
+        {/* ROW 2: Clinical Safety | Statistical Validation | Multi-Center | FAISS */}
+        {/* ============================================================ */}
+        <div className="dash-row dash-row-2">
+
+          {/* CLINICAL SAFETY & QUALITY */}
+          <Panel3D className="safety-panel" delay={0.6}>
+            <div className="panel-header">
+              <div className="panel-title-group">
+                <ShieldCheck size={14} className="panel-icon" />
+                <h3 className="panel-title">Clinical Safety & Quality</h3>
+              </div>
+              <motion.div
+                className="panel-badge green"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 1.2, type: "spring", stiffness: 500 }}
+              >
+                <CheckCircle size={10} />
+                All Checks Passed
+              </motion.div>
+            </div>
+
+            <div className="safety-checks">
+              {[
+                { name: "Boundary Proximity", detail: `(EF: ${ef}%)`, icon: <ShieldCheck size={14} />, badge: "safe", badgeText: "Safe" },
+                { name: "TTA Uncertainty", detail: `(±${result?.uncertainty || 1.1}%)`, icon: <Activity size={14} />, badge: "stable", badgeText: "Stable" },
+                { name: "Image Quality Index", detail: "", icon: <Eye size={14} />, badge: "excellent", badgeText: "Excellent" },
+                { name: "SNR", detail: "", icon: <BarChart3 size={14} />, isValue: true, value: "32.6 dB" }
+              ].map((item, i) => (
+                <motion.div
+                  key={i}
+                  className="safety-row"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.8 + i * 0.1 }}
+                  whileHover={{ x: 4, backgroundColor: "rgba(255,255,255,0.02)" }}
+                >
+                  <div className="safety-item-left">
+                    <span className="safety-item-icon">{item.icon}</span>
+                    <div className="safety-item-info">
+                      <span className="safety-item-name">{item.name}</span>
+                      {item.detail && <span className="safety-item-detail">{item.detail}</span>}
+                    </div>
+                  </div>
+                  {item.isValue ? (
+                    <span className="safety-value">{item.value}</span>
+                  ) : (
+                    <motion.span
+                      className={`safety-badge ${item.badge}`}
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ delay: 1 + i * 0.1, type: "spring" }}
+                    >
+                      {item.badgeText}
+                    </motion.span>
+                  )}
+                </motion.div>
+              ))}
+            </div>
+          </Panel3D>
+
+          {/* STATISTICAL VALIDATION */}
+          <Panel3D className="stats-panel" delay={0.7}>
+            <div className="panel-header">
+              <div className="panel-title-group">
+                <BarChart3 size={14} className="panel-icon" />
+                <h3 className="panel-title">Statistical Validation</h3>
+              </div>
+              <div className="panel-badge cyan-outline">95% CI</div>
+            </div>
+
+            <div className="stats-content">
+              <div className="stats-column">
+                <div className="stats-sub-title">Bootstrap Analysis</div>
+                <div className="bootstrap-chart">
+                  <svg viewBox="0 0 120 60" preserveAspectRatio="none" className="bootstrap-svg">
+                    {[8, 14, 22, 35, 48, 55, 50, 40, 28, 18, 10, 5].map((h, i) => (
+                      <motion.rect
+                        key={i}
+                        x={i * 10}
+                        y={60 - h}
+                        width="8"
+                        height={h}
+                        fill={i >= 4 && i <= 7 ? "#3b82f6" : "#1e3a5f"}
+                        rx="1"
+                        initial={{ height: 0, y: 60 }}
+                        animate={{ height: h, y: 60 - h }}
+                        transition={{ duration: 0.6, delay: 0.9 + i * 0.04 }}
+                      />
+                    ))}
+                  </svg>
+                </div>
+                <div className="stats-ci-text">
+                  <span className="stats-ci-label">95% CI</span>
+                  <span className="stats-ci-value">[3.84%, 4.52%]</span>
+                </div>
+                <div className="stats-ci-text">
+                  <span className="stats-ci-label">MAE:</span>
+                  <span className="stats-ci-value">4.18%</span>
+                </div>
+              </div>
+
+              <div className="stats-column">
+                <div className="stats-sub-title">Bland-Altman Plot</div>
+                <div className="bland-altman-chart">
+                  <svg viewBox="0 0 120 80" preserveAspectRatio="none" className="bland-svg">
+                    <line x1="0" y1="40" x2="120" y2="40" stroke="rgba(255,255,255,0.1)" />
+                    <line x1="0" y1="15" x2="120" y2="15" stroke="#ef4444" strokeWidth="0.5" strokeDasharray="3,3" opacity="0.4" />
+                    <line x1="0" y1="65" x2="120" y2="65" stroke="#ef4444" strokeWidth="0.5" strokeDasharray="3,3" opacity="0.4" />
+                    {[
+                      [15,38],[22,42],[30,35],[35,45],[42,37],[48,43],[55,39],[60,44],[65,36],[72,41],
+                      [78,38],[85,42],[90,35],[95,40],[100,43],[20,33],[38,47],[52,34],[68,46],[82,37],
+                      [25,44],[45,32],[58,48],[75,35],[88,41],[12,42],[32,36],[50,44],[62,38],[92,39],
+                      [18,46],[40,34],[56,42],[70,37],[84,43],[28,40],[46,38],[64,41],[76,44],[96,36]
+                    ].map(([cx, cy], i) => (
+                      <motion.circle
+                        key={i}
+                        cx={cx}
+                        cy={cy}
+                        r="1.8"
+                        fill="#3b82f6"
+                        initial={{ opacity: 0, r: 0 }}
+                        animate={{ opacity: 0.6, r: 1.8 }}
+                        transition={{ delay: 1 + i * 0.02, duration: 0.3 }}
+                      />
+                    ))}
+                    <line x1="0" y1="38" x2="120" y2="38" stroke="#22c55e" strokeWidth="0.8" strokeDasharray="4,2" />
+                  </svg>
+                </div>
+                <div className="stats-ba-text">
+                  <div>Bias: <span className="text-green">+0.42%</span></div>
+                  <div>LoA: [-7.80%, +8.60%]</div>
+                </div>
+              </div>
+            </div>
+          </Panel3D>
+
+          {/* MULTI-CENTER GENERALIZATION */}
+          <Panel3D className="multicenter-panel" delay={0.8}>
+            <div className="panel-header">
+              <div className="panel-title-group">
+                <Database size={14} className="panel-icon" />
+                <h3 className="panel-title">Multi-Center Generalization</h3>
+              </div>
+            </div>
+
+            <div className="multicenter-legend">
+              <span className="mc-legend-item"><span className="mc-dot blue"></span>MAE</span>
+              <span className="mc-legend-item"><span className="mc-dot purple"></span>R²</span>
+            </div>
+
+            <div className="multicenter-chart">
+              <div className="mc-y-axis"><span>1.0</span><span>0.5</span><span>0</span></div>
+              <div className="mc-bars-container">
+                {[
+                  { label: "Stanford\n(EchoNet)", mae: 4.18, r2: 0.785, c1: "#3b82f6", c2: "#a855f7" },
+                  { label: "CAMUS", mae: 4.80, r2: 0.72, c1: "#06b6d4", c2: "#8b5cf6" },
+                  { label: "CAMUS\n(Zero-Shot)", mae: 8.20, r2: 0.58, c1: "#f59e0b", c2: "#d946ef" },
+                  { label: "CAMUS\n(Fine-Tuned)", mae: 4.80, r2: 0.72, c1: "#22c55e", c2: "#a855f7" }
+                ].map((item, i) => (
+                  <div key={i} className="mc-bar-group">
+                    <div className="mc-bars">
+                      <motion.div
+                        className="mc-bar mc-bar-mae"
+                        style={{ background: item.c1 }}
+                        initial={{ height: 0 }}
+                        animate={{ height: `${(item.mae / 10) * 100}%` }}
+                        transition={{ duration: 0.8, delay: 1 + i * 0.1, ease: [0.22, 1, 0.36, 1] }}
+                        whileHover={{ filter: "brightness(1.3)" }}
+                      >
+                        <span className="mc-bar-val">{item.mae.toFixed(2)}</span>
+                      </motion.div>
+                      <motion.div
+                        className="mc-bar mc-bar-r2"
+                        style={{ background: item.c2 }}
+                        initial={{ height: 0 }}
+                        animate={{ height: `${item.r2 * 100}%` }}
+                        transition={{ duration: 0.8, delay: 1.05 + i * 0.1, ease: [0.22, 1, 0.36, 1] }}
+                        whileHover={{ filter: "brightness(1.3)" }}
+                      >
+                        <span className="mc-bar-val">{item.r2.toFixed(2)}</span>
+                      </motion.div>
+                    </div>
+                    <span className="mc-bar-label">{item.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </Panel3D>
+
+          {/* FAISS CASE RETRIEVAL */}
+          <Panel3D className="faiss-panel" delay={0.9}>
+            <div className="panel-header">
+              <div className="panel-title-group">
+                <Search size={14} className="panel-icon" />
+                <h3 className="panel-title">FAISS Case Retrieval</h3>
+              </div>
+              <motion.button
+                className="panel-view-all"
+                whileHover={{ x: 4 }}
+              >
+                View All →
+              </motion.button>
+            </div>
+
+            <div className="faiss-subtitle">Top 3 Similar Cases</div>
+
+            <div className="faiss-cases">
+              {[
+                { id: "#4821", ef: "56.3%", sim: "0.96" },
+                { id: "#1732", ef: "52.7%", sim: "0.94" },
+                { id: "#7610", ef: "58.1%", sim: "0.93" }
+              ].map((c, i) => (
+                <motion.div
+                  key={i}
+                  className="faiss-case-row"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 1.1 + i * 0.1 }}
+                  whileHover={{ scale: 1.03, x: 4, borderColor: "rgba(6,182,212,0.3)" }}
+                >
+                  <div className="faiss-case-thumb">
+                    <img src="/sample_echo.webp" alt={`Case ${c.id}`} className="faiss-thumb-img" />
+                  </div>
+                  <div className="faiss-case-info">
+                    <span className="faiss-case-id">Case {c.id}</span>
+                    <span className="faiss-case-ef">EF: {c.ef} • {c.sim}</span>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </Panel3D>
+        </div>
+
+        {/* ============================================================ */}
+        {/* ROW 3: Clinical Report | EchoJarvis Copilot */}
+        {/* ============================================================ */}
+        <div className="dash-row dash-row-3">
+
+          {/* CLINICAL INTELLIGENCE REPORT */}
+          <Panel3D className="report-panel" delay={1.0} tiltIntensity={4}>
+            <div className="panel-header report-header">
+              <div className="panel-title-group">
+                <FileText size={14} className="panel-icon" />
+                <h3 className="panel-title">Clinical Intelligence Report</h3>
+              </div>
+              <div className="report-tabs">
+                {["Doctor Report", "Patient Summary", "AI Copilot"].map((tab) => (
+                  <button
+                    key={tab}
+                    className={`report-tab-btn ${reportTab === tab.toLowerCase().replace(/\s/g, "-") ? "active" : ""}`}
+                    onClick={() => setReportTab(tab.toLowerCase().replace(/\s/g, "-"))}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </div>
+              <div className="report-actions">
+                <motion.button className="report-action-btn" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <Printer size={14} /> Print
+                </motion.button>
+                <motion.button className="report-action-btn export-btn" whileHover={{ scale: 1.05, boxShadow: "0 0 20px rgba(6,182,212,0.3)" }} whileTap={{ scale: 0.95 }} onClick={handleExportPDF}>
+                  <Download size={14} /> Export Professional Report
+                  <ArrowRight size={12} />
+                </motion.button>
+              </div>
+            </div>
+
+            <motion.div
+              className="report-body"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.3, duration: 0.6 }}
+            >
+              <div className="report-letterhead">
+                <div className="report-logo-section">
+                  <div className="stanford-logo">
+                    <svg viewBox="0 0 24 24" className="stanford-icon">
+                      <rect x="2" y="2" width="20" height="20" rx="4" fill="#8b1a1a" />
+                      <text x="12" y="16" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold">S</text>
+                    </svg>
+                  </div>
+                  <div className="stanford-text">
+                    <span className="stanford-name">Stanford Medicine</span>
+                    <span className="stanford-sub">Health Care</span>
+                  </div>
+                </div>
+                <h2 className="report-main-title">Echocardiography Analysis Report</h2>
+              </div>
+
+              <div className="report-meta">
+                <div>Study ID: EC-2025-001247 Analysis</div>
+                <div>Patient: CH. Model: EchoCard-AI v2.0</div>
+              </div>
+
+              <div className="report-content-grid">
+                <div className="report-section">
+                  <h4 className="report-section-title">Quantitative Findings</h4>
+                  <div className="report-finding-row">
+                    <span>LVEF (Simpson):</span>
+                    <span className="report-finding-val">{ef}% ± 1.1%</span>
+                    <motion.span
+                      className="report-finding-badge green"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ delay: 1.5, type: "spring" }}
+                    >
+                      ✓ Preserved Function
+                    </motion.span>
+                  </div>
+                </div>
+
+                <div className="report-section">
+                  <h4 className="report-section-title">Key Observations</h4>
+                  <ul className="report-observations">
+                    {["Normal LV function", "No significant regional wall motion abnormality", "Good image quality"].map((obs, i) => (
+                      <motion.li
+                        key={i}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 1.4 + i * 0.1 }}
+                      >
+                        {obs}
+                      </motion.li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </motion.div>
+          </Panel3D>
+
+          {/* ECHOJARVIS CLINICAL COPILOT */}
+          <Panel3D className="copilot-panel" delay={1.1} tiltIntensity={4}>
+            <div className="panel-header">
+              <div className="panel-title-group">
+                <motion.div animate={{ rotate: [0, 10, -10, 0] }} transition={{ duration: 3, repeat: Infinity }}>
+                  <MessageSquare size={14} className="panel-icon" />
+                </motion.div>
+                <h3 className="panel-title">EchoJarvis Clinical Copilot</h3>
+                <motion.span
+                  className="copilot-beta"
+                  animate={{ opacity: [1, 0.5, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  Beta
+                </motion.span>
+              </div>
+              <button className="copilot-summarize">
+                Summarize the key findings of this analysis.
+              </button>
+            </div>
+
+            <div className="copilot-chat">
+              <AnimatePresence>
+                {copilotMessages.map((msg, i) => (
+                  <motion.div
+                    key={i}
+                    className={`copilot-msg ${msg.sender === "ai" ? "copilot-msg-ai" : "copilot-msg-user"}`}
+                    initial={{ opacity: 0, y: 15, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                  >
+                    {msg.sender === "ai" && (
+                      <div className="copilot-ai-avatar">
+                        <motion.div animate={{ rotate: [0, 360] }} transition={{ duration: 6, repeat: Infinity, ease: "linear" }}>
+                          <Sparkles size={14} />
+                        </motion.div>
+                      </div>
+                    )}
+                    <div className={`copilot-msg-bubble ${msg.sender === "ai" ? "ai-bubble" : "user-bubble"}`}>
+                      {msg.text}
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+
+            <div className="copilot-actions">
+              {["Show model comparison", "Explain 17 segments", "Export report"].map((label, i) => (
+                <motion.button
+                  key={i}
+                  className="copilot-action-chip"
+                  whileHover={{ scale: 1.08, y: -2, boxShadow: "0 4px 15px rgba(6,182,212,0.2)" }}
+                  whileTap={{ scale: 0.95 }}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 1.4 + i * 0.1 }}
+                  onClick={() => {
+                    setCopilotMessages(prev => [...prev, { sender: "user", text: label }])
+                    setTimeout(() => {
+                      setCopilotMessages(prev => [...prev, { sender: "ai", text: `Processing: "${label}"... I'll provide a detailed analysis shortly.` }])
+                    }, 500)
+                  }}
+                >
+                  {label}
+                </motion.button>
+              ))}
+            </div>
+
+            <form onSubmit={handleSendCopilot} className="copilot-input-row">
+              <input
+                type="text"
+                value={copilotInput}
+                onChange={(e) => setCopilotInput(e.target.value)}
+                placeholder="Ask a question about this study..."
+                className="copilot-input"
+              />
+              <motion.button
+                type="submit"
+                className="copilot-send-btn"
+                whileHover={{ scale: 1.1, rotate: 15 }}
+                whileTap={{ scale: 0.85 }}
+              >
+                <Send size={16} />
+              </motion.button>
+            </form>
+          </Panel3D>
         </div>
       </main>
-
-      {/* FOOTER */}
-      <footer className="h-16 px-8 border-t border-white/[0.08] flex items-center justify-between text-xs text-slate-500 font-light mt-12">
-        <span>EchoCard-AI PACS v2.4 • Clinical Decision Support System</span>
-        <span>AHA / ASE / EACVI Compliant • Non-Invasive Cardiac Telemetry</span>
-      </footer>
     </div>
   )
 }

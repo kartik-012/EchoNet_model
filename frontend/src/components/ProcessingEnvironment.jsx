@@ -1,16 +1,144 @@
-import React, { useEffect, useState } from "react"
-import { motion } from "motion/react"
-import { Activity, AlertTriangle, ArrowLeft, CheckCircle2, Cpu, Sparkles } from "lucide-react"
+import React, { useEffect, useState, useRef } from "react"
+import { motion, AnimatePresence } from "motion/react"
+import { Activity, AlertTriangle, ArrowLeft, CheckCircle2, Cpu, Sparkles, Shield, Zap, Database } from "lucide-react"
 import { runPredictionOnFile, runPredictionOnSample } from "../services/api"
 
 const STAGES = [
-  { id: 1, label: "Input Validation & SNR Calibration" },
-  { id: 2, label: "32-Frame Spatiotemporal Tensor Sampling" },
-  { id: 3, label: "PyTorch 3D ResNet-18 Ejection Fraction Inference" },
-  { id: 4, label: "Simpson's Biplane Endocardial Contour Extraction" },
-  { id: 5, label: "3D Grad-CAM Attention Heatmap Backpropagation" },
-  { id: 6, label: "FAISS Precedent Retrieval & Report Synthesis" }
+  { id: 1, label: "Input Validation & SNR Calibration", icon: Shield },
+  { id: 2, label: "32-Frame Spatiotemporal Tensor Sampling", icon: Database },
+  { id: 3, label: "PyTorch 3D ResNet-18 Ejection Fraction Inference", icon: Cpu },
+  { id: 4, label: "Simpson's Biplane Endocardial Contour Extraction", icon: Activity },
+  { id: 5, label: "3D Grad-CAM Attention Heatmap Backpropagation", icon: Sparkles },
+  { id: 6, label: "FAISS Precedent Retrieval & Report Synthesis", icon: Zap }
 ]
+
+/* ====== 3D Rotating Scanner Rings ====== */
+function ScannerRings3D() {
+  return (
+    <div className="relative w-56 h-56 flex items-center justify-center" style={{ perspective: "500px" }}>
+      {/* Outer orbit ring */}
+      <motion.div
+        className="absolute inset-0 rounded-full"
+        style={{
+          border: "1px solid rgba(6,182,212,0.15)",
+          transformStyle: "preserve-3d"
+        }}
+        animate={{ rotateX: 70, rotateZ: [0, 360] }}
+        transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+      />
+      {/* Middle orbit ring */}
+      <motion.div
+        className="absolute rounded-full"
+        style={{
+          inset: "20px",
+          border: "1px solid rgba(59,130,246,0.2)",
+          transformStyle: "preserve-3d"
+        }}
+        animate={{ rotateX: 65, rotateZ: [360, 0] }}
+        transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
+      />
+      {/* Inner orbit ring */}
+      <motion.div
+        className="absolute rounded-full"
+        style={{
+          inset: "40px",
+          border: "1.5px solid rgba(6,182,212,0.25)",
+          transformStyle: "preserve-3d"
+        }}
+        animate={{ rotateX: 75, rotateZ: [0, 360] }}
+        transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+      />
+      {/* Radar sweep arc */}
+      <motion.div
+        className="absolute rounded-full border-t-2 border-r-2 border-cyan-300/60"
+        style={{ inset: "50px" }}
+        animate={{ rotate: [0, 360] }}
+        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+      />
+      {/* Outer ripple */}
+      <div className="absolute inset-0 rounded-full border border-cyan-400/10 animate-ping opacity-20" />
+      {/* Center glow icon */}
+      <motion.div
+        className="w-18 h-18 rounded-2xl bg-cyan-950/90 border border-cyan-400/50 flex items-center justify-center text-cyan-300 z-10"
+        style={{ width: "72px", height: "72px" }}
+        animate={{
+          boxShadow: [
+            "0 0 20px rgba(6,182,212,0.3)",
+            "0 0 50px rgba(6,182,212,0.6), 0 0 80px rgba(6,182,212,0.2)",
+            "0 0 20px rgba(6,182,212,0.3)"
+          ]
+        }}
+        transition={{ duration: 2, repeat: Infinity }}
+      >
+        <Activity className="w-9 h-9" />
+      </motion.div>
+    </div>
+  )
+}
+
+/* ====== Animated ECG Trace ====== */
+function ECGTrace() {
+  return (
+    <div className="w-72 h-10 overflow-hidden opacity-80 mb-6">
+      <svg viewBox="0 0 400 40" className="w-[200%] h-full" style={{ animation: "ecgWaveScroll 3s linear infinite" }}>
+        <defs>
+          <linearGradient id="ecgProcGrad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="transparent" />
+            <stop offset="30%" stopColor="#06b6d4" stopOpacity="0.7" />
+            <stop offset="70%" stopColor="#06b6d4" stopOpacity="0.7" />
+            <stop offset="100%" stopColor="transparent" />
+          </linearGradient>
+          <filter id="ecgProcGlow">
+            <feGaussianBlur stdDeviation="2" result="blur" />
+            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
+        </defs>
+        <polyline
+          points="0,20 40,20 50,20 55,8 60,32 65,6 70,34 75,20 110,20 120,20 125,8 130,32 135,6 140,34 145,20 180,20 190,20 195,8 200,32 205,6 210,34 215,20 250,20 260,20 265,8 270,32 275,6 280,34 285,20 320,20 330,20 335,8 340,32 345,6 350,34 355,20 400,20"
+          fill="none"
+          stroke="url(#ecgProcGrad)"
+          strokeWidth="2"
+          filter="url(#ecgProcGlow)"
+        />
+      </svg>
+    </div>
+  )
+}
+
+/* ====== Data Stream Particles ====== */
+function DataStreamParticles() {
+  const particles = useRef(
+    Array.from({ length: 25 }, (_, i) => ({
+      id: i,
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+      size: Math.random() * 2 + 0.5,
+      dur: Math.random() * 15 + 10,
+      delay: Math.random() * 8
+    }))
+  ).current
+
+  return (
+    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+      {particles.map((p) => (
+        <div
+          key={p.id}
+          className="absolute rounded-full"
+          style={{
+            left: `${p.x}%`,
+            top: `${p.y}%`,
+            width: `${p.size}px`,
+            height: `${p.size}px`,
+            background: "#06b6d4",
+            opacity: 0.15,
+            boxShadow: "0 0 6px rgba(6,182,212,0.4)",
+            animation: `floatParticle ${p.dur}s ease-in-out ${p.delay}s infinite`
+          }}
+        />
+      ))}
+    </div>
+  )
+}
 
 export default function ProcessingEnvironment({
   analysisPayload,
@@ -21,6 +149,7 @@ export default function ProcessingEnvironment({
   const [currentStage, setCurrentStage] = useState(1)
   const [progressPercent, setProgressPercent] = useState(15)
   const [errorMsg, setErrorMsg] = useState(null)
+  const [completedStages, setCompletedStages] = useState([])
 
   useEffect(() => {
     let isCancelled = false
@@ -31,15 +160,17 @@ export default function ProcessingEnvironment({
         setCurrentStage(1)
         setProgressPercent(18)
         await new Promise((r) => setTimeout(r, 280))
+        if (isCancelled) return
+        setCompletedStages(prev => [...prev, 1])
 
         // Stage 2
-        if (isCancelled) return
         setCurrentStage(2)
         setProgressPercent(35)
         await new Promise((r) => setTimeout(r, 300))
+        if (isCancelled) return
+        setCompletedStages(prev => [...prev, 2])
 
         // Stage 3: Real Backend Inference
-        if (isCancelled) return
         setCurrentStage(3)
         setProgressPercent(55)
 
@@ -51,26 +182,30 @@ export default function ProcessingEnvironment({
         } else {
           throw new Error("No media provided for AI analysis")
         }
+        if (isCancelled) return
+        setCompletedStages(prev => [...prev, 3])
 
         // Stage 4
-        if (isCancelled) return
         setCurrentStage(4)
         setProgressPercent(72)
         await new Promise((r) => setTimeout(r, 260))
+        if (isCancelled) return
+        setCompletedStages(prev => [...prev, 4])
 
         // Stage 5
-        if (isCancelled) return
         setCurrentStage(5)
         setProgressPercent(88)
         await new Promise((r) => setTimeout(r, 260))
+        if (isCancelled) return
+        setCompletedStages(prev => [...prev, 5])
 
         // Stage 6
-        if (isCancelled) return
         setCurrentStage(6)
         setProgressPercent(100)
         await new Promise((r) => setTimeout(r, 350))
-
         if (isCancelled) return
+        setCompletedStages(prev => [...prev, 6])
+
         setTimeout(() => {
           onAnalysisSuccess(result, analysisPayload)
         }, 400)
@@ -92,98 +227,229 @@ export default function ProcessingEnvironment({
 
   return (
     <div className="min-h-screen bg-[#040711] text-slate-100 flex flex-col justify-between p-8 sm:p-12 relative overflow-hidden select-none">
-      {/* Background ambient radial glows */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-cyan-500/10 rounded-full blur-[140px] pointer-events-none" />
+      {/* Background effects */}
+      <DataStreamParticles />
+
+      {/* Ambient radial glows */}
+      <motion.div
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full pointer-events-none"
+        animate={{
+          background: [
+            "radial-gradient(circle, rgba(6,182,212,0.08) 0%, transparent 70%)",
+            "radial-gradient(circle, rgba(59,130,246,0.1) 0%, transparent 70%)",
+            "radial-gradient(circle, rgba(6,182,212,0.08) 0%, transparent 70%)"
+          ]
+        }}
+        transition={{ duration: 4, repeat: Infinity }}
+        style={{ filter: "blur(60px)" }}
+      />
+
+      {/* Animated grid */}
+      <div className="absolute inset-0 pointer-events-none z-0 opacity-[0.012]" style={{
+        backgroundImage: `
+          linear-gradient(rgba(6,182,212,0.3) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(6,182,212,0.3) 1px, transparent 1px)
+        `,
+        backgroundSize: "50px 50px"
+      }} />
 
       {/* TOP HEADER */}
-      <header className="relative z-10 flex items-center justify-between">
+      <motion.header
+        className="relative z-10 flex items-center justify-between"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
         <div className="flex items-center space-x-3">
-          <div className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping" />
+          <motion.div
+            className="w-2.5 h-2.5 rounded-full bg-cyan-400"
+            animate={{
+              scale: [1, 1.5, 1],
+              boxShadow: ["0 0 8px rgba(6,182,212,0.4)", "0 0 20px rgba(6,182,212,0.8)", "0 0 8px rgba(6,182,212,0.4)"]
+            }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+          />
           <span className="text-base font-medium tracking-wide text-white">
             EchoCard<span className="text-cyan-400">·AI</span>
           </span>
-          <span className="text-[11px] font-mono text-cyan-400/80 uppercase tracking-widest pl-2">
+          <motion.span
+            className="text-[11px] font-mono text-cyan-400/80 uppercase tracking-widest pl-2"
+            animate={{ opacity: [0.6, 1, 0.6] }}
+            transition={{ duration: 2, repeat: Infinity }}
+          >
             Inference Pipeline
-          </span>
+          </motion.span>
         </div>
 
-        <button
+        <motion.button
           onClick={onCancel}
+          whileHover={{ scale: 1.05, borderColor: "rgba(255,255,255,0.3)" }}
+          whileTap={{ scale: 0.95 }}
           className="flex items-center space-x-2 px-4 py-2 rounded-xl border border-white/10 hover:border-white/20 bg-white/[0.03] text-xs text-slate-400 hover:text-white transition cursor-pointer"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>Cancel</span>
-        </button>
-      </header>
+        </motion.button>
+      </motion.header>
 
       {/* CENTER PROCESSING DISPLAY */}
-      <div className="relative z-10 flex flex-col items-center justify-center max-w-xl mx-auto w-full text-center">
-        {errorMsg ? (
-          <div className="p-8 rounded-3xl bg-rose-950/30 border border-rose-500/40 text-center space-y-4">
-            <div className="w-14 h-14 rounded-2xl bg-rose-500/20 text-rose-400 flex items-center justify-center mx-auto">
-              <AlertTriangle className="w-7 h-7" />
-            </div>
-            <h2 className="text-lg font-semibold text-white">Inference Pipeline Interrupted</h2>
-            <p className="text-xs text-rose-300 font-mono max-w-md">{errorMsg}</p>
-            <button
-              onClick={onCancel}
-              className="mt-4 px-6 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-semibold text-white transition cursor-pointer"
+      <div className="relative z-10 flex flex-col items-center justify-center max-w-xl mx-auto w-full text-center flex-1">
+        <AnimatePresence mode="wait">
+          {errorMsg ? (
+            <motion.div
+              key="error"
+              initial={{ opacity: 0, scale: 0.9, rotateX: -10 }}
+              animate={{ opacity: 1, scale: 1, rotateX: 0 }}
+              className="p-8 rounded-3xl bg-rose-950/30 border border-rose-500/40 text-center space-y-4"
+              style={{ perspective: "800px" }}
             >
-              Return to Upload Studio
-            </button>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center w-full">
-            {/* Concentric Pulsing Ultrasonic Scanner Rings */}
-            <div className="relative w-48 h-48 flex items-center justify-center mb-8">
-              {/* Outer Ripple */}
-              <div className="absolute inset-0 rounded-full border border-cyan-400/20 animate-ping opacity-30" />
-              {/* Middle Ring */}
-              <div className="absolute inset-4 rounded-full border border-teal-400/30 animate-pulse" />
-              {/* Radar Sweep Arc */}
-              <div className="absolute inset-8 rounded-full border-t-2 border-r-2 border-cyan-300 animate-spin" style={{ animationDuration: "2s" }} />
-              {/* Center Glow Heart Icon */}
-              <div className="w-16 h-16 rounded-2xl bg-cyan-950/80 border border-cyan-400/50 shadow-[0_0_30px_rgba(6,182,212,0.4)] flex items-center justify-center text-cyan-300">
-                <Activity className="w-8 h-8 animate-pulse" />
-              </div>
-            </div>
-
-            {/* Glowing Lead II ECG wave */}
-            <div className="w-64 h-8 overflow-hidden opacity-80 mb-6">
-              <svg viewBox="0 0 200 40" className="w-full h-full text-cyan-400 fill-none stroke-current stroke-2">
-                <path d="M 0 20 L 40 20 L 48 20 L 52 8 L 56 32 L 60 4 L 66 36 L 70 20 L 78 20 L 86 16 L 94 20 L 140 20 L 148 20 L 152 8 L 156 32 L 160 4 L 166 36 L 170 20 L 200 20" />
-              </svg>
-            </div>
-
-            {/* Title & Stage indicator */}
-            <h2 className="text-2xl font-light text-white tracking-tight mb-2">
-              Quantifying Cardiac Function...
-            </h2>
-            <p className="text-xs font-mono text-cyan-300/90 h-5 mb-8">
-              Stage {currentStage} of 6 — {STAGES[currentStage - 1]?.label}
-            </p>
-
-            {/* Progress Bar */}
-            <div className="w-full max-w-md bg-white/[0.08] h-1.5 rounded-full overflow-hidden mb-3">
               <motion.div
-                className="h-full bg-gradient-to-r from-cyan-400 via-sky-400 to-teal-300 rounded-full shadow-[0_0_12px_#00f0ff]"
-                initial={{ width: 0 }}
-                animate={{ width: `${progressPercent}%` }}
-                transition={{ ease: "easeOut", duration: 0.3 }}
-              />
-            </div>
-            <div className="text-[11px] font-mono text-slate-500 tracking-wider">
-              {progressPercent}% COMPLETED
-            </div>
-          </div>
-        )}
+                className="w-14 h-14 rounded-2xl bg-rose-500/20 text-rose-400 flex items-center justify-center mx-auto"
+                animate={{ rotate: [0, -5, 5, 0] }}
+                transition={{ duration: 0.5, repeat: 2 }}
+              >
+                <AlertTriangle className="w-7 h-7" />
+              </motion.div>
+              <h2 className="text-lg font-semibold text-white">Inference Pipeline Interrupted</h2>
+              <p className="text-xs text-rose-300 font-mono max-w-md">{errorMsg}</p>
+              <motion.button
+                onClick={onCancel}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="mt-4 px-6 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-semibold text-white transition cursor-pointer"
+              >
+                Return to Upload Studio
+              </motion.button>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="processing"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex flex-col items-center w-full"
+            >
+              {/* 3D Scanner Rings */}
+              <div className="mb-6">
+                <ScannerRings3D />
+              </div>
+
+              {/* ECG Trace */}
+              <ECGTrace />
+
+              {/* Title */}
+              <motion.h2
+                className="text-2xl font-light text-white tracking-tight mb-2"
+                animate={{ opacity: [0.8, 1, 0.8] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              >
+                Quantifying Cardiac Function...
+              </motion.h2>
+
+              {/* Stage Label */}
+              <AnimatePresence mode="wait">
+                <motion.p
+                  key={currentStage}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="text-xs font-mono text-cyan-300/90 h-5 mb-6"
+                >
+                  Stage {currentStage} of 6 — {STAGES[currentStage - 1]?.label}
+                </motion.p>
+              </AnimatePresence>
+
+              {/* Stage Steps Visualization */}
+              <div className="w-full max-w-md flex items-center justify-between mb-6">
+                {STAGES.map((stage) => {
+                  const StageIcon = stage.icon
+                  const isCompleted = completedStages.includes(stage.id)
+                  const isActive = currentStage === stage.id
+                  return (
+                    <motion.div
+                      key={stage.id}
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center relative ${
+                        isCompleted
+                          ? "bg-cyan-500/20 border border-cyan-400/50 text-cyan-400"
+                          : isActive
+                          ? "bg-cyan-950/80 border border-cyan-400/40 text-cyan-300"
+                          : "bg-white/[0.03] border border-white/[0.08] text-slate-600"
+                      }`}
+                      animate={isActive ? {
+                        boxShadow: ["0 0 0px rgba(6,182,212,0)", "0 0 20px rgba(6,182,212,0.4)", "0 0 0px rgba(6,182,212,0)"]
+                      } : {}}
+                      transition={{ duration: 1.5, repeat: Infinity }}
+                    >
+                      {isCompleted ? (
+                        <motion.div
+                          initial={{ scale: 0, rotate: -180 }}
+                          animate={{ scale: 1, rotate: 0 }}
+                          transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                        >
+                          <CheckCircle2 className="w-4 h-4" />
+                        </motion.div>
+                      ) : (
+                        <StageIcon className="w-4 h-4" />
+                      )}
+                      {isActive && (
+                        <motion.div
+                          className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-cyan-400"
+                          animate={{ scale: [1, 1.8, 1], opacity: [1, 0.5, 1] }}
+                          transition={{ duration: 1, repeat: Infinity }}
+                        />
+                      )}
+                    </motion.div>
+                  )
+                })}
+              </div>
+
+              {/* Progress Bar */}
+              <div className="w-full max-w-md bg-white/[0.06] h-2 rounded-full overflow-hidden mb-3 relative">
+                <motion.div
+                  className="h-full rounded-full relative overflow-hidden"
+                  style={{
+                    background: "linear-gradient(90deg, #06b6d4, #3b82f6, #06b6d4)",
+                    backgroundSize: "200% 100%",
+                  }}
+                  initial={{ width: 0 }}
+                  animate={{
+                    width: `${progressPercent}%`,
+                    backgroundPosition: ["0% 0%", "200% 0%"]
+                  }}
+                  transition={{
+                    width: { ease: "easeOut", duration: 0.4 },
+                    backgroundPosition: { duration: 2, repeat: Infinity, ease: "linear" }
+                  }}
+                >
+                  {/* Glow tip */}
+                  <div className="absolute right-0 top-0 bottom-0 w-4" style={{
+                    background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.4))",
+                    boxShadow: "0 0 12px rgba(6,182,212,0.8), 0 0 30px rgba(6,182,212,0.4)"
+                  }} />
+                </motion.div>
+              </div>
+
+              <motion.div
+                className="text-[11px] font-mono text-slate-500 tracking-wider"
+                animate={{ opacity: [0.5, 1, 0.5] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+              >
+                {progressPercent}% COMPLETED
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* FOOTER */}
-      <footer className="relative z-10 flex items-center justify-between text-xs text-slate-500 font-light">
+      <motion.footer
+        className="relative z-10 flex items-center justify-between text-xs text-slate-500 font-light"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.3 }}
+      >
         <span>Stanford Medicine EchoNet-Dynamic R3D-18</span>
         <span>AHA / ASE / EACVI Metric Stratification</span>
-      </footer>
+      </motion.footer>
     </div>
   )
 }
