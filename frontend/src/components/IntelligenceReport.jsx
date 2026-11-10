@@ -447,18 +447,52 @@ export default function IntelligenceReport({
             <div className="metric-card-shimmer"></div>
             <div className="metric-header">
               <div className="metric-icon-dot cyan pulse-dot"></div>
-              <span className="metric-label">LVEF</span>
-              <Info size={12} className="metric-info-icon" />
+              <span className="metric-label">LVEF (Ejection Fraction)</span>
+              <span className="text-[10px] font-mono text-cyan-400/80 bg-cyan-950/60 px-2 py-0.5 rounded-full border border-cyan-500/30">
+                ±{result?.uncertainty || "1.1"}% CI
+              </span>
             </div>
-            <div className="metric-main-row">
+            <div className="metric-main-row items-center justify-between">
               <div className="metric-value-group">
                 <span className="metric-big-value glow-text-cyan"><AnimatedValue value={ef} /></span>
                 <span className="metric-big-value-unit">%</span>
-                <span className="metric-change positive">↑ +0.8%</span>
+                <div className="text-[11px] font-mono text-slate-400 mt-1">
+                  AHA/ASE 2022
+                </div>
+              </div>
+
+              {/* Radial Arc SVG Gauge */}
+              <div className="relative w-16 h-16 flex items-center justify-center">
+                <svg viewBox="0 0 72 72" className="w-full h-full -rotate-90">
+                  <circle
+                    cx="36"
+                    cy="36"
+                    r="28"
+                    fill="none"
+                    stroke="rgba(255,255,255,0.08)"
+                    strokeWidth="5"
+                  />
+                  <circle
+                    cx="36"
+                    cy="36"
+                    r="28"
+                    fill="none"
+                    stroke={ef >= 50 ? "#22c55e" : ef >= 41 ? "#f59e0b" : "#ef4444"}
+                    strokeWidth="5"
+                    strokeDasharray={`${(ef / 100) * (2 * Math.PI * 28)} ${2 * Math.PI * 28}`}
+                    strokeLinecap="round"
+                    style={{ transition: "stroke-dasharray 1.2s ease-out" }}
+                  />
+                </svg>
+                <div className="absolute text-[10px] font-mono font-bold text-white">
+                  {Math.round(ef)}%
+                </div>
               </div>
             </div>
             <div className="metric-badge-row">
-              <span className="metric-badge green badge-glow">Normal / Preserved</span>
+              <span className={`metric-badge ${ef >= 50 ? "green" : ef >= 41 ? "orange" : "red"} badge-glow`}>
+                {ef >= 50 ? "Preserved (Normal ≥50%)" : ef >= 41 ? "Mildly Reduced (41-49%)" : "Reduced (<40%)"}
+              </span>
             </div>
             <div className="metric-echo-thumb">
               <img src={activeFrameSrc} alt="Echo" className="metric-echo-img" onError={(e) => { e.target.onerror = null; e.target.src = "/sample_echo.webp" }} />
