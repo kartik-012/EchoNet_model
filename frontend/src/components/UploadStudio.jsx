@@ -558,6 +558,9 @@ function CaseCard3D({ caseData, index, onSelect }) {
   const { ref, style, handleMouseMove, handleMouseLeave } = use3DTilt(12)
   const c = caseData
 
+  // Simulated transducer & quality specs
+  const aqiScore = index === 0 ? "98%" : index === 1 ? "94%" : index === 2 ? "91%" : "96%"
+
   return (
     <motion.div
       ref={ref}
@@ -568,10 +571,10 @@ function CaseCard3D({ caseData, index, onSelect }) {
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       style={style}
-      className="p-4 rounded-2xl border border-white/[0.08] bg-white/[0.02] hover:border-cyan-400/60 hover:bg-cyan-950/20 cursor-pointer transition flex flex-col justify-between group relative overflow-hidden"
+      className="p-4.5 rounded-2xl border border-white/[0.08] bg-white/[0.02] hover:border-cyan-400/60 hover:bg-cyan-950/25 cursor-pointer transition flex flex-col justify-between group relative overflow-hidden"
     >
-      {/* Holographic top edge */}
-      <div className="absolute top-0 left-[15%] right-[15%] h-px bg-gradient-to-r from-transparent via-cyan-400/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+      {/* Holographic top edge glow */}
+      <div className="absolute top-0 left-[10%] right-[10%] h-px bg-gradient-to-r from-transparent via-cyan-400/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
       <div>
         <div className="flex items-center justify-between mb-2">
@@ -581,12 +584,12 @@ function CaseCard3D({ caseData, index, onSelect }) {
           <span
             className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
               c.cohort === "Normal Function"
-                ? "bg-emerald-500/20 text-emerald-300"
+                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
                 : c.cohort === "Mildly Reduced"
-                ? "bg-amber-500/20 text-amber-300"
+                ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
                 : c.cohort === "Severely Reduced"
-                ? "bg-rose-500/20 text-rose-300"
-                : "bg-cyan-500/20 text-cyan-300"
+                ? "bg-rose-500/20 text-rose-300 border border-rose-500/30"
+                : "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
             }`}
           >
             {c.cohort}
@@ -595,17 +598,32 @@ function CaseCard3D({ caseData, index, onSelect }) {
         <div className="text-sm font-semibold text-white group-hover:text-cyan-200 transition">
           {c.name.split(" — ")[0]}
         </div>
-        <div className="text-xs text-slate-400 mt-0.5">{c.duration}</div>
+        <div className="text-xs text-slate-400 mt-1 flex items-center justify-between font-mono">
+          <span>{c.duration}</span>
+          <span className="text-[10px] text-cyan-400/70">50 fps</span>
+        </div>
       </div>
 
-      <div className="mt-4 pt-3 border-t border-white/[0.06] flex items-center justify-between">
-        <span className="text-xs text-slate-400">Ground Truth</span>
-        <motion.span
-          className="text-sm font-mono font-bold text-cyan-400"
-          whileHover={{ textShadow: "0 0 12px rgba(6,182,212,0.6)" }}
-        >
-          {c.groundTruthEF}% EF
-        </motion.span>
+      <div className="mt-4 pt-3 border-t border-white/[0.06]">
+        <div className="flex items-center justify-between text-[11px] text-slate-400 mb-1.5 font-mono">
+          <span>Acoustic Quality</span>
+          <span className="text-emerald-400 font-bold">{aqiScore}</span>
+        </div>
+        <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden mb-2.5">
+          <div
+            className="h-full bg-gradient-to-r from-cyan-400 to-emerald-400 rounded-full"
+            style={{ width: aqiScore }}
+          />
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-slate-400">Ground Truth</span>
+          <motion.span
+            className="text-sm font-mono font-bold text-cyan-400"
+            whileHover={{ textShadow: "0 0 12px rgba(6,182,212,0.6)" }}
+          >
+            {c.groundTruthEF}% EF
+          </motion.span>
+        </div>
       </div>
     </motion.div>
   )
