@@ -1,11 +1,26 @@
-import React from "react"
-import { Cpu, ShieldCheck, X, Activity, Database, CheckCircle2, BookOpen } from "lucide-react"
+import React, { useEffect } from "react"
+import { Cpu, ShieldCheck, X, Activity, Database, CheckCircle2, Layers } from "lucide-react"
 
 export default function ModelEvaluationModal({ isOpen, onClose, health }) {
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") onClose()
+    }
+    if (isOpen) {
+      window.addEventListener("keydown", handleKeyDown)
+    }
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [isOpen, onClose])
+
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div
+      className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose()
+      }}
+    >
       <div className="relative w-full max-w-3xl max-h-[85vh] bg-[#060b18] border border-cyan-500/30 rounded-2xl shadow-2xl flex flex-col overflow-hidden text-slate-100 font-sans">
         {/* Header */}
         <div className="p-5 border-b border-slate-800 bg-slate-950/80 flex items-center justify-between">
@@ -24,7 +39,7 @@ export default function ModelEvaluationModal({ isOpen, onClose, health }) {
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -53,6 +68,33 @@ export default function ModelEvaluationModal({ isOpen, onClose, health }) {
               <div className="text-[10px] text-slate-400 uppercase">Training Dataset</div>
               <div className="text-base font-semibold text-emerald-400 mt-0.5">EchoNet-Dynamic</div>
               <div className="text-[10px] text-slate-400 mt-1">10,030 full cases</div>
+            </div>
+          </div>
+
+          {/* Neural Layer Pipeline Flowchart */}
+          <div className="space-y-2">
+            <h3 className="text-xs uppercase font-semibold text-white tracking-wider flex items-center space-x-1.5">
+              <Layers className="w-3.5 h-3.5 text-cyan-400" />
+              <span>PyTorch Forward Inference Pipeline</span>
+            </h3>
+            <div className="p-3 rounded-xl border border-slate-800 bg-slate-950 overflow-x-auto">
+              <div className="flex items-center space-x-2 text-[10px] text-slate-300 whitespace-nowrap min-w-max">
+                <span className="px-2 py-1 bg-cyan-950/80 border border-cyan-500/30 rounded text-cyan-300 font-bold">Input Cine [1, 3, 32, 112, 112]</span>
+                <span>→</span>
+                <span className="px-2 py-1 bg-slate-900 border border-white/10 rounded">Conv3D 7×7×7 (64)</span>
+                <span>→</span>
+                <span className="px-2 py-1 bg-slate-900 border border-white/10 rounded">ResBlock 1 (64)</span>
+                <span>→</span>
+                <span className="px-2 py-1 bg-slate-900 border border-white/10 rounded">ResBlock 2 (128)</span>
+                <span>→</span>
+                <span className="px-2 py-1 bg-slate-900 border border-white/10 rounded">ResBlock 3 (256)</span>
+                <span>→</span>
+                <span className="px-2 py-1 bg-purple-950/80 border border-purple-500/30 rounded text-purple-300">ResBlock 4 (512) [Grad-CAM]</span>
+                <span>→</span>
+                <span className="px-2 py-1 bg-slate-900 border border-white/10 rounded">AdaptiveAvgPool3D</span>
+                <span>→</span>
+                <span className="px-2 py-1 bg-emerald-950/80 border border-emerald-500/30 rounded text-emerald-300 font-bold">LVEF Regressor (%)</span>
+              </div>
             </div>
           </div>
 
@@ -147,7 +189,7 @@ export default function ModelEvaluationModal({ isOpen, onClose, health }) {
         <div className="p-4 border-t border-slate-800 bg-slate-950 flex justify-end">
           <button
             onClick={onClose}
-            className="px-4 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-medium text-xs font-mono transition"
+            className="px-4 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-medium text-xs font-mono transition cursor-pointer"
           >
             Close Inspector
           </button>
