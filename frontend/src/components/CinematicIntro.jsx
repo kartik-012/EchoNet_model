@@ -58,36 +58,47 @@ export default function CinematicIntro({ onEnterStudio, reducedMotion, setReduce
 
       {/* TOP BAR */}
       <motion.header
-        className={`relative z-20 px-10 py-8 flex items-center justify-between transition-all duration-700 ${isTransitioning ? "opacity-0 -translate-y-4" : "opacity-100"}`}
+        className={`relative z-20 px-8 sm:px-10 py-6 sm:py-8 flex items-center justify-between transition-all duration-700 ${isTransitioning ? "opacity-0 -translate-y-4" : "opacity-100"}`}
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: isTransitioning ? 0 : 1, y: isTransitioning ? -20 : 0 }}
         transition={{ duration: 0.6 }}
       >
         <div className="flex items-center space-x-3">
           <motion.div
-            className="w-2 h-2 rounded-full bg-cyan-400"
+            className="w-2.5 h-2.5 rounded-full bg-cyan-400"
             animate={{
               boxShadow: [
                 "0 0 8px rgba(6,182,212,0.4)",
-                "0 0 16px rgba(6,182,212,0.8)",
+                "0 0 18px rgba(6,182,212,0.9)",
                 "0 0 8px rgba(6,182,212,0.4)"
               ]
             }}
             transition={{ duration: 2, repeat: Infinity }}
           />
-          <span className="text-base font-medium tracking-wide text-white/90">
-            EchoCard<span className="text-cyan-400">·AI</span>
-          </span>
+          <div className="flex items-baseline space-x-2">
+            <span className="text-lg font-semibold tracking-tight text-white">
+              EchoCard<span className="text-cyan-400 font-bold">·AI</span>
+            </span>
+            <span className="hidden sm:inline-block text-[11px] font-mono text-cyan-400/70 border border-cyan-500/20 px-2 py-0.5 rounded-full bg-cyan-950/30">
+              v2.4 PACS Ready
+            </span>
+          </div>
         </div>
 
-        <motion.button
-          onClick={() => setReducedMotion(!reducedMotion)}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="text-[11px] text-slate-500 hover:text-slate-300 transition font-light tracking-wide cursor-pointer"
-        >
-          {reducedMotion ? "Motion: Reduced" : "Motion: Fluid"}
-        </motion.button>
+        <div className="flex items-center space-x-4">
+          <div className="hidden md:flex items-center space-x-2 text-[11px] text-slate-400 font-mono bg-slate-900/60 border border-white/5 px-3 py-1.5 rounded-full backdrop-blur-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+            <span>R3D-18 Inference Engine Online</span>
+          </div>
+          <motion.button
+            onClick={() => setReducedMotion(!reducedMotion)}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="text-[11px] text-slate-400 hover:text-cyan-300 transition font-mono px-3 py-1.5 rounded-lg border border-white/10 bg-white/[0.02] backdrop-blur-sm cursor-pointer"
+          >
+            {reducedMotion ? "Motion: Static" : "Motion: Fluid 3D"}
+          </motion.button>
+        </div>
       </motion.header>
 
       {/* CENTER HERO */}
