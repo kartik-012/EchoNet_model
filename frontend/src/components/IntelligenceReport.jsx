@@ -400,6 +400,13 @@ export default function IntelligenceReport({
     generateClinicalPDF(result, studyConfig)
   }
 
+  const handleExportFrame = () => {
+    const link = document.createElement("a")
+    link.download = `echocard_frame_${currentFrame + 1}.png`
+    link.href = activeFrameSrc
+    link.click()
+  }
+
   const activeFrameRaw = result?.all_frames_cineloop?.[currentFrame] || result?.visualizations?.original_frame
   const activeFrameSrc = toImageSrc(activeFrameRaw, "/sample_echo.webp")
   const activeOverlaySrc = toImageSrc(result?.visualizations?.overlay || result?.all_frames_cineloop?.[currentFrame], "/thumb_overlay.png")
@@ -775,12 +782,40 @@ export default function IntelligenceReport({
                     {cell.isHeatmap && <div className="heatmap-overlay-gradient"></div>}
                     {cell.hasControls && (
                       <>
-                        <div className="imaging-controls">
-                          <button className="img-ctrl-btn" onClick={() => setIsPlaying(!isPlaying)}>
+                        <div className="imaging-controls flex items-center space-x-1">
+                          <button className="img-ctrl-btn" onClick={() => setIsPlaying(!isPlaying)} title={isPlaying ? "Pause" : "Play"}>
                             {isPlaying ? <Pause size={10} /> : <Play size={10} />}
                           </button>
-                          <button className="img-ctrl-btn" onClick={() => setCurrentFrame(p => Math.max(0, p - 1))}><ChevronLeft size={10} /></button>
-                          <button className="img-ctrl-btn" onClick={() => setCurrentFrame(p => Math.min(31, p + 1))}><ChevronRight size={10} /></button>
+                          <button className="img-ctrl-btn" onClick={() => setCurrentFrame(p => Math.max(0, p - 1))} title="Prev Frame">
+                            <ChevronLeft size={10} />
+                          </button>
+                          <button className="img-ctrl-btn" onClick={() => setCurrentFrame(p => Math.min(31, p + 1))} title="Next Frame">
+                            <ChevronRight size={10} />
+                          </button>
+                          <button
+                            className="img-ctrl-btn text-[9px] font-mono px-1"
+                            onClick={() => { setIsPlaying(false); setCurrentFrame(0); }}
+                            title="Jump to End-Diastole (ED)"
+                          >
+                            ED
+                          </button>
+                          <button
+                            className="img-ctrl-btn text-[9px] font-mono px-1"
+                            onClick={() => { setIsPlaying(false); setCurrentFrame(15); }}
+                            title="Jump to End-Systole (ES)"
+                          >
+                            ES
+                          </button>
+                          <button
+                            className="img-ctrl-btn text-[9px] font-mono px-1 text-cyan-300"
+                            onClick={() => setPlaybackSpeed(s => s === 140 ? 70 : s === 70 ? 35 : 140)}
+                            title="Toggle Playback Speed"
+                          >
+                            {playbackSpeed === 140 ? "0.5x" : playbackSpeed === 70 ? "1x" : "2x"}
+                          </button>
+                          <button className="img-ctrl-btn" onClick={handleExportFrame} title="Export Current Frame as PNG">
+                            <Download size={10} />
+                          </button>
                         </div>
                         <div className="imaging-frame-count">{currentFrame + 1} / 32</div>
                         <button className="imaging-expand"><Maximize2 size={10} /></button>
