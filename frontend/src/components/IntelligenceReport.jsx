@@ -346,6 +346,7 @@ export default function IntelligenceReport({
   const [currentFrame, setCurrentFrame] = useState(16)
   const [isPlaying, setIsPlaying] = useState(false)
   const [playbackSpeed, setPlaybackSpeed] = useState(70)
+  const [gradCamOpacity, setGradCamOpacity] = useState(0.75)
   const playTimerRef = useRef(null)
   const [activeNav, setActiveNav] = useState("Analysis")
   const [reportTab, setReportTab] = useState("doctor")
@@ -778,8 +779,14 @@ export default function IntelligenceReport({
                     <span>{cell.label}</span>
                   </div>
                   <div className={`imaging-cell-viewport ${cell.isHeatmap ? "heatmap-viewport" : ""}`}>
-                    <img src={cell.src} alt={cell.label} className="imaging-img" onError={(e) => { e.target.onerror = null; e.target.src = "/sample_echo.webp" }} />
-                    {cell.isHeatmap && <div className="heatmap-overlay-gradient"></div>}
+                    <img
+                      src={cell.src}
+                      alt={cell.label}
+                      className="imaging-img"
+                      style={cell.isHeatmap ? { opacity: gradCamOpacity } : {}}
+                      onError={(e) => { e.target.onerror = null; e.target.src = "/sample_echo.webp" }}
+                    />
+                    {cell.isHeatmap && <div className="heatmap-overlay-gradient" style={{ opacity: gradCamOpacity * 0.7 }}></div>}
                     {cell.hasControls && (
                       <>
                         <div className="imaging-controls flex items-center space-x-1">
@@ -822,10 +829,22 @@ export default function IntelligenceReport({
                       </>
                     )}
                     {cell.isHeatmap && (
-                      <>
-                        <div className="heatmap-opacity"><Eye size={9} /><span>70%</span></div>
-                        <div className="imaging-frame-count">70%</div>
-                      </>
+                      <div className="heatmap-opacity flex items-center space-x-1.5 px-2 py-0.5 rounded-full bg-black/75 backdrop-blur-md border border-white/10">
+                        <Eye size={10} className="text-cyan-400" />
+                        <input
+                          type="range"
+                          min="0.1"
+                          max="1.0"
+                          step="0.05"
+                          value={gradCamOpacity}
+                          onChange={(e) => setGradCamOpacity(parseFloat(e.target.value))}
+                          className="w-14 h-1 accent-cyan-400 cursor-pointer"
+                          title="Adjust Grad-CAM Blend Opacity"
+                        />
+                        <span className="text-[9px] font-mono text-cyan-300 w-6 text-right">
+                          {Math.round(gradCamOpacity * 100)}%
+                        </span>
+                      </div>
                     )}
                     {cell.hasLegend && (
                       <div className="seg-legend">
