@@ -473,10 +473,27 @@ export default function UploadStudio({
                 <h3 className="text-xl font-medium text-white mb-2">
                   Drop echocardiography video or image here
                 </h3>
-                <p className="text-xs text-slate-400 mb-6 max-w-md font-light">
-                  Supports ultrasound video cineloops (<span className="text-cyan-300 font-mono">.avi, .mp4, .mov, .webm</span>)
+                <p className="text-xs text-slate-400 mb-5 max-w-md font-light">
+                  Supports ultrasound cineloops (<span className="text-cyan-300 font-mono">.avi, .mp4, .mov, .webm</span>)
                   or still echocardiogram frames (<span className="text-cyan-300 font-mono">.png, .jpg, .dcm</span>).
                 </p>
+
+                {/* File Format Compatibility Badges */}
+                <div className="flex flex-wrap items-center justify-center gap-2 mb-6 max-w-lg">
+                  <span className="px-2.5 py-1 rounded-full bg-cyan-950/40 border border-cyan-500/20 text-[10px] font-mono text-cyan-300">
+                    A4C B-Mode
+                  </span>
+                  <span className="px-2.5 py-1 rounded-full bg-slate-900/60 border border-white/10 text-[10px] font-mono text-slate-300">
+                    AVI / MP4 / WebM
+                  </span>
+                  <span className="px-2.5 py-1 rounded-full bg-slate-900/60 border border-white/10 text-[10px] font-mono text-slate-300">
+                    DICOM Cine Loops
+                  </span>
+                  <span className="px-2.5 py-1 rounded-full bg-emerald-950/40 border border-emerald-500/20 text-[10px] font-mono text-emerald-300">
+                    Auto-Frame Extraction (32-T)
+                  </span>
+                </div>
+
                 <motion.button
                   type="button"
                   whileHover={{ scale: 1.05, boxShadow: "0 0 25px rgba(6,182,212,0.25)" }}
