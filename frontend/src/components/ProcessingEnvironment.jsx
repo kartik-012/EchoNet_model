@@ -380,6 +380,28 @@ export default function ProcessingEnvironment({
                       transition={{ duration: 1.5, repeat: Infinity }}
                     >
                       {isCompleted ? (
+                        <CheckCircle2 className="w-4 h-4 text-cyan-400" />
+                      ) : (
+                        <StageIcon className="w-4 h-4" />
+                      )}
+                    </motion.div>
+                  )
+                })}
+              </div>
+
+              {/* Real-time Hardware Telemetry Readout */}
+              <div className="w-full max-w-md p-3 rounded-xl bg-black/40 border border-white/5 backdrop-blur-sm flex items-center justify-between text-[10px] font-mono text-slate-400">
+                <span className="flex items-center space-x-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                  <span className="text-cyan-300/80">TENSOR: [1, 3, 32, 112, 112]</span>
+                </span>
+                <span className="text-slate-500">|</span>
+                <span className="text-emerald-400/90">BACKPROP: GRAD-CAM L4</span>
+                <span className="text-slate-500">|</span>
+                <span className="text-purple-400/90">FAISS: K=3</span>
+              </div>
+                    >
+                      {isCompleted ? (
                         <motion.div
                           initial={{ scale: 0, rotate: -180 }}
                           animate={{ scale: 1, rotate: 0 }}
