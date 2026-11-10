@@ -36,6 +36,16 @@ export default function App() {
     fetchHealth()
       .then(setHealth)
       .catch((err) => console.warn("Backend not yet connected:", err.message))
+
+    const handleGlobalKeys = (e) => {
+      if (e.key === "?" || e.key === "h" || e.key === "H") {
+        if (!["INPUT", "TEXTAREA"].includes(document.activeElement?.tagName)) {
+          setIsModelInfoOpen((prev) => !prev)
+        }
+      }
+    }
+    window.addEventListener("keydown", handleGlobalKeys)
+    return () => window.removeEventListener("keydown", handleGlobalKeys)
   }, [])
 
   // Transition from Intro to Studio

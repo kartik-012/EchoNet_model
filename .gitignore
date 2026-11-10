@@ -30,6 +30,13 @@ yarn-error.log*
 videos/
 *.avi
 
+# Scratch & presentation local generation artifacts
+scratch/
+research_papers/
+*.pptx
+*.pdf
+generate_templated_pptx.py
+
 # OS files
 .DS_Store
 Thumbs.db
