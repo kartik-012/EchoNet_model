@@ -907,11 +907,16 @@ export default function IntelligenceReport({
             </div>
 
             <div className="spatio-section">
-              <div className="spatio-chart-label">Volume-Time Curve V(t)</div>
+              <div className="flex items-center justify-between spatio-chart-label">
+                <span>Volume-Time Curve V(t)</span>
+                <span className="text-[10px] font-mono text-cyan-400 bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-500/20">
+                  Frame {currentFrame + 1}: {(65.6 + (67.0 / 2) * (1 + Math.cos((2 * Math.PI * currentFrame) / 32))).toFixed(1)} mL
+                </span>
+              </div>
               <div className="volume-legend">
                 <span className="vol-legend-item"><span className="vol-dot cyan"></span>LV Volume</span>
-                <span className="vol-legend-item"><span className="vol-dot green"></span>ED</span>
-                <span className="vol-legend-item"><span className="vol-dot red"></span>ES</span>
+                <span className="vol-legend-item"><span className="vol-dot green"></span>ED (132.6 mL)</span>
+                <span className="vol-legend-item"><span className="vol-dot red"></span>ES (65.6 mL)</span>
               </div>
               <div className="volume-chart">
                 <div className="vol-y-axis">
@@ -940,8 +945,25 @@ export default function IntelligenceReport({
                   <text x="48" y="15" fill="#22c55e" fontSize="9" fontFamily="monospace">ED</text>
                   <line x1="140" y1="0" x2="140" y2="120" stroke="#ef4444" strokeWidth="1" strokeDasharray="3,3" opacity="0.5" />
                   <text x="128" y="100" fill="#ef4444" fontSize="9" fontFamily="monospace">ES</text>
-                  {/* Animated cursor dot */}
-                  <circle cx={currentFrame * (300 / 32)} cy="50" r="4" fill="#06b6d4" filter="url(#glow)" className="vol-cursor-dot" />
+                  {/* Dynamic tracking vertical cursor & dot */}
+                  <line
+                    x1={currentFrame * (300 / 32)}
+                    y1="0"
+                    x2={currentFrame * (300 / 32)}
+                    y2="120"
+                    stroke="#06b6d4"
+                    strokeWidth="1.5"
+                    strokeDasharray="2,2"
+                    opacity="0.8"
+                  />
+                  <circle
+                    cx={currentFrame * (300 / 32)}
+                    cy={20 + ((65.6 + (67.0 / 2) * (1 - Math.cos((2 * Math.PI * currentFrame) / 32))) / 150) * 80}
+                    r="4"
+                    fill="#06b6d4"
+                    filter="url(#glow)"
+                    className="vol-cursor-dot"
+                  />
                 </svg>
                 <div className="vol-x-axis">
                   {[1, 4, 8, 12, 16, 20, 24, 28, 32].map(n => <span key={n}>{n}</span>)}
