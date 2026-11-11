@@ -437,6 +437,7 @@ export default function IntelligenceReport({
   const [lvids, setLvids] = useState(3.1)
   const [hrInput, setHrInput] = useState(72)
   const [bsaInput, setBsaInput] = useState(1.85)
+  const [hybridWeightNN, setHybridWeightNN] = useState(0.70)
   const playTimerRef = useRef(null)
   const [activeNav, setActiveNav] = useState("Analysis")
   const [reportTab, setReportTab] = useState("doctor")
@@ -1383,11 +1384,39 @@ export default function IntelligenceReport({
                     </div>
                   </div>
                   <div className="model-formula">
-                    <span className="formula-label">Formula</span>
-                    <span className="formula-text">0.70 * NN + 0.30 * R3D</span>
+                    <span className="formula-label">Ensemble Weights</span>
+                    <span className="formula-text">{hybridWeightNN.toFixed(2)} * NN + {(1 - hybridWeightNN).toFixed(2)} * R3D</span>
                   </div>
                 </div>
               </motion.div>
+            </div>
+
+            {/* Interactive Ensemble Weight Tuning Slider */}
+            <div className="mt-3 pt-2.5 border-t border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[10px] font-mono">
+              <div className="flex items-center space-x-2">
+                <span className="text-slate-400">Anatomical (nnU-Net):</span>
+                <span className="text-cyan-300 font-bold w-9">{Math.round(hybridWeightNN * 100)}%</span>
+                <input
+                  type="range"
+                  min="0.10"
+                  max="0.90"
+                  step="0.05"
+                  value={hybridWeightNN}
+                  onChange={(e) => setHybridWeightNN(parseFloat(e.target.value))}
+                  className="w-24 h-1 accent-amber-400 cursor-pointer"
+                  title="Adjust Neuro-Symbolic Ensemble Weight"
+                />
+                <span className="text-amber-300 font-bold w-9">{Math.round((1 - hybridWeightNN) * 100)}%</span>
+                <span className="text-slate-400">Temporal (R3D)</span>
+              </div>
+              <div className="flex items-center space-x-3 text-right">
+                <span className="text-slate-400">
+                  Consensus LVEF: <strong className="text-amber-300">{(hybridWeightNN * (ef + 1.2) + (1 - hybridWeightNN) * ef).toFixed(1)}%</strong>
+                </span>
+                <span className="text-slate-400">
+                  Projected MAE: <strong className="text-emerald-400">{(hybridWeightNN * 7.87 + (1 - hybridWeightNN) * 4.18 - 0.5 * Math.sin(hybridWeightNN * Math.PI)).toFixed(2)}%</strong>
+                </span>
+              </div>
             </div>
           </Panel3D>
         </div>
