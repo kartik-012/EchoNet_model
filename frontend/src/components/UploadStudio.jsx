@@ -147,6 +147,9 @@ export default function UploadStudio({
   const [videoError, setVideoError] = useState(false)
   const [selectedProbe, setSelectedProbe] = useState("S5-1")
   const [isDicomModalOpen, setIsDicomModalOpen] = useState(false)
+  const [zoomLevel, setZoomLevel] = useState(1.0)
+  const [gainDb, setGainDb] = useState(52)
+  const [showSectorGrid, setShowSectorGrid] = useState(true)
   const fileInputRef = useRef(null)
 
   const processFile = (file) => {
@@ -362,12 +365,61 @@ export default function UploadStudio({
                 </div>
               </div>
 
+              {/* Acoustic Viewport Controls Bar */}
+              <div className="w-full max-w-md flex items-center justify-between px-3 py-1.5 rounded-xl bg-black/60 border border-white/5 mb-2 text-[10px] font-mono">
+                <div className="flex items-center space-x-2">
+                  <span className="text-slate-400">Zoom:</span>
+                  {[1.0, 1.25, 1.5].map((z) => (
+                    <button
+                      key={z}
+                      onClick={() => setZoomLevel(z)}
+                      className={`px-2 py-0.5 rounded transition ${zoomLevel === z ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40" : "text-slate-400 hover:text-white"}`}
+                    >
+                      {z}x
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className="text-slate-400">Gain:</span>
+                  <input
+                    type="range"
+                    min="35"
+                    max="70"
+                    value={gainDb}
+                    onChange={(e) => setGainDb(parseInt(e.target.value))}
+                    className="w-16 h-1 accent-cyan-400 cursor-pointer"
+                    title="Acoustic Gain (dB)"
+                  />
+                  <span className="text-cyan-300 w-8 text-right">{gainDb}dB</span>
+                </div>
+                <button
+                  onClick={() => setShowSectorGrid(!showSectorGrid)}
+                  className={`px-2 py-0.5 rounded transition ${showSectorGrid ? "text-cyan-300 bg-cyan-950/60 border border-cyan-500/30" : "text-slate-400"}`}
+                  title="Toggle Ultrasonic Sector Beam Grid"
+                >
+                  Sector
+                </button>
+              </div>
+
               {/* Viewport Preview with 3D depth */}
               <motion.div
                 className="w-full max-w-md h-64 sm:h-72 rounded-2xl bg-black border border-white/10 overflow-hidden relative flex items-center justify-center mb-6"
                 whileHover={{ scale: 1.01, boxShadow: "0 0 30px rgba(6,182,212,0.15)" }}
                 transition={{ duration: 0.3 }}
               >
+                {/* Sector Grid Overlay */}
+                {showSectorGrid && (
+                  <svg className="absolute inset-0 w-full h-full pointer-events-none z-10 opacity-35" viewBox="0 0 240 240">
+                    <path d="M 120 15 L 20 220 A 210 210 0 0 0 220 220 Z" fill="none" stroke="#06b6d4" strokeWidth="0.8" strokeDasharray="3,3" />
+                    <line x1="120" y1="15" x2="120" y2="225" stroke="#06b6d4" strokeWidth="0.6" strokeDasharray="2,2" opacity="0.6" />
+                    <line x1="120" y1="15" x2="70" y2="220" stroke="#06b6d4" strokeWidth="0.5" strokeDasharray="2,4" opacity="0.4" />
+                    <line x1="120" y1="15" x2="170" y2="220" stroke="#06b6d4" strokeWidth="0.5" strokeDasharray="2,4" opacity="0.4" />
+                    <path d="M 70 120 A 105 105 0 0 1 170 120" fill="none" stroke="#06b6d4" strokeWidth="0.5" strokeDasharray="2,3" opacity="0.4" />
+                    <path d="M 45 170 A 155 155 0 0 1 195 170" fill="none" stroke="#06b6d4" strokeWidth="0.5" strokeDasharray="2,3" opacity="0.4" />
+                    <text x="8" y="232" fill="#22d3ee" fontSize="7" fontFamily="monospace">A4C SECTOR 75°</text>
+                  </svg>
+                )}
+
                 {/* Scan line */}
                 <div className="absolute inset-0 pointer-events-none z-10">
                   <div className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/30 to-transparent" style={{
@@ -376,11 +428,18 @@ export default function UploadStudio({
                 </div>
 
                 {selectedDemo ? (
-                  <div className="w-full h-full relative flex items-center justify-center">
+                  <div
+                    className="w-full h-full relative flex items-center justify-center transition-all duration-300"
+                    style={{
+                      transform: `scale(${zoomLevel})`,
+                      filter: `brightness(${0.7 + (gainDb / 100) * 0.6}) contrast(${0.8 + (gainDb / 100) * 0.5})`
+                    }}
+                  >
                     <img
                       src="/sample_echo.webp"
                       alt="Apical 4-Chamber Cineloop"
                       className="h-full object-contain"
+                      onError={(e) => { e.target.onerror = null; e.target.src = "/thumb_bmode.jpg" }}
                     />
                     <motion.div
                       initial={{ opacity: 0, x: -20 }}
@@ -391,11 +450,18 @@ export default function UploadStudio({
                     </motion.div>
                   </div>
                 ) : selectedFile?.name?.toLowerCase().endsWith(".avi") || videoError ? (
-                  <div className="w-full h-full relative flex items-center justify-center bg-black">
+                  <div
+                    className="w-full h-full relative flex items-center justify-center bg-black transition-all duration-300"
+                    style={{
+                      transform: `scale(${zoomLevel})`,
+                      filter: `brightness(${0.7 + (gainDb / 100) * 0.6}) contrast(${0.8 + (gainDb / 100) * 0.5})`
+                    }}
+                  >
                     <img
                       src="/sample_echo.webp"
                       alt="Echocardiography Cineloop"
                       className="h-full object-contain opacity-95"
+                      onError={(e) => { e.target.onerror = null; e.target.src = "/thumb_bmode.jpg" }}
                     />
                     <div className="absolute top-3 left-3 px-2.5 py-1 rounded-md bg-black/80 backdrop-blur-md text-[10px] font-mono text-cyan-300 border border-cyan-500/30 flex items-center space-x-1.5">
                       <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
@@ -408,7 +474,11 @@ export default function UploadStudio({
                 ) : mediaType === "video" && previewUrl ? (
                   <video
                     src={previewUrl}
-                    className="w-full h-full object-contain"
+                    className="w-full h-full object-contain transition-all duration-300"
+                    style={{
+                      transform: `scale(${zoomLevel})`,
+                      filter: `brightness(${0.7 + (gainDb / 100) * 0.6}) contrast(${0.8 + (gainDb / 100) * 0.5})`
+                    }}
                     autoPlay
                     loop
                     muted
@@ -418,10 +488,14 @@ export default function UploadStudio({
                   <img
                     src={previewUrl}
                     alt="Preview"
-                    className="w-full h-full object-contain"
+                    className="w-full h-full object-contain transition-all duration-300"
+                    style={{
+                      transform: `scale(${zoomLevel})`,
+                      filter: `brightness(${0.7 + (gainDb / 100) * 0.6}) contrast(${0.8 + (gainDb / 100) * 0.5})`
+                    }}
                     onError={(e) => {
                       e.target.onerror = null
-                      e.target.src = "/thumb_original_frame.png"
+                      e.target.src = "/thumb_bmode.jpg"
                     }}
                   />
                 ) : null}
