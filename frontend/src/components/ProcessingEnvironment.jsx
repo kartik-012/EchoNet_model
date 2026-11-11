@@ -55,6 +55,28 @@ function ScannerRings3D() {
         animate={{ rotate: [0, 360] }}
         transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
       />
+      {/* Phased Array Ultrasonic Beamforming Sweep Rays */}
+      <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-40" viewBox="0 0 220 220">
+        {Array.from({ length: 13 }).map((_, i) => {
+          const angle = -45 + i * (90 / 12)
+          const rad = (angle * Math.PI) / 180
+          const x2 = 110 + Math.sin(rad) * 98
+          const y2 = 110 - Math.cos(rad) * 98
+          return (
+            <line
+              key={i}
+              x1="110"
+              y1="110"
+              x2={x2}
+              y2={y2}
+              stroke="#06b6d4"
+              strokeWidth="0.8"
+              strokeDasharray="2,3"
+              opacity={0.35 + (i % 3) * 0.25}
+            />
+          )
+        })}
+      </svg>
       {/* Outer ripple */}
       <div className="absolute inset-0 rounded-full border border-cyan-400/10 animate-ping opacity-20" />
       {/* Center glow icon */}
@@ -150,6 +172,14 @@ export default function ProcessingEnvironment({
   const [progressPercent, setProgressPercent] = useState(15)
   const [errorMsg, setErrorMsg] = useState(null)
   const [completedStages, setCompletedStages] = useState([])
+  const [elapsedMs, setElapsedMs] = useState(0)
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setElapsedMs((prev) => prev + 50)
+    }, 50)
+    return () => clearInterval(timer)
+  }, [])
 
   useEffect(() => {
     let isCancelled = false
@@ -281,15 +311,22 @@ export default function ProcessingEnvironment({
           </motion.span>
         </div>
 
-        <motion.button
-          onClick={onCancel}
-          whileHover={{ scale: 1.05, borderColor: "rgba(255,255,255,0.3)" }}
-          whileTap={{ scale: 0.95 }}
-          className="flex items-center space-x-2 px-4 py-2 rounded-xl border border-white/10 hover:border-white/20 bg-white/[0.03] text-xs text-slate-400 hover:text-white transition cursor-pointer"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Cancel</span>
-        </motion.button>
+        <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2 text-[11px] font-mono text-slate-400 bg-black/40 border border-white/5 px-3 py-1.5 rounded-full backdrop-blur-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+            <span>{(elapsedMs / 1000).toFixed(2)}s</span>
+          </div>
+
+          <motion.button
+            onClick={onCancel}
+            whileHover={{ scale: 1.05, borderColor: "rgba(255,255,255,0.3)" }}
+            whileTap={{ scale: 0.95 }}
+            className="flex items-center space-x-2 px-4 py-2 rounded-xl border border-white/10 hover:border-white/20 bg-white/[0.03] text-xs text-slate-400 hover:text-white transition cursor-pointer"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Cancel</span>
+          </motion.button>
+        </div>
       </motion.header>
 
       {/* CENTER PROCESSING DISPLAY */}
@@ -396,7 +433,7 @@ export default function ProcessingEnvironment({
                   <span className="text-cyan-300/80">TENSOR: [1, 3, 32, 112, 112]</span>
                 </span>
                 <span className="text-slate-500">|</span>
-                <span className="text-emerald-400/90">BACKPROP: GRAD-CAM L4</span>
+                <span className="text-emerald-400/90">CUDA #0: 672 GB/s</span>
                 <span className="text-slate-500">|</span>
                 <span className="text-purple-400/90">FAISS: K=3</span>
               </div>
