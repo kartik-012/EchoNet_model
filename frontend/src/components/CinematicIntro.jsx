@@ -1,13 +1,126 @@
-import React, { useState } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "motion/react"
 import ThreeHeartCanvas from "./ThreeHeartCanvas"
-import { ArrowRight, Sparkles } from "lucide-react"
+import { ArrowRight, Sparkles, Volume2, VolumeX, Eye, Activity } from "lucide-react"
+
+/* ================================================================ */
+/* ORGANIC WEB AUDIO HEARTBEAT SYNTHESIZER (Lub-Dub S1/S2 Transients) */
+/* ================================================================ */
+class HeartAudioSynth {
+  constructor() {
+    this.ctx = null
+    this.isPlaying = false
+    this.timer = null
+    this.bpm = 72
+  }
+
+  start(bpm = 72) {
+    this.bpm = bpm
+    if (!this.ctx) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext
+      if (!AudioCtx) return
+      this.ctx = new AudioCtx()
+    }
+    if (this.ctx.state === "suspended") {
+      this.ctx.resume()
+    }
+    this.isPlaying = true
+    this.scheduleBeat()
+  }
+
+  stop() {
+    this.isPlaying = false
+    if (this.timer) clearTimeout(this.timer)
+  }
+
+  setBpm(bpm) {
+    this.bpm = bpm
+  }
+
+  playThump(time, freq, dur, vol) {
+    if (!this.ctx) return
+    const osc = this.ctx.createOscillator()
+    const gain = this.ctx.createGain()
+    const filter = this.ctx.createBiquadFilter()
+
+    osc.type = "sine"
+    osc.frequency.setValueAtTime(freq, time)
+    osc.frequency.exponentialRampToValueAtTime(28, time + dur)
+
+    filter.type = "lowpass"
+    filter.frequency.setValueAtTime(130, time)
+
+    gain.gain.setValueAtTime(vol, time)
+    gain.gain.exponentialRampToValueAtTime(0.001, time + dur)
+
+    osc.connect(filter)
+    filter.connect(gain)
+    gain.connect(this.ctx.destination)
+
+    osc.start(time)
+    osc.stop(time + dur)
+  }
+
+  scheduleBeat() {
+    if (!this.isPlaying || !this.ctx) return
+    const now = this.ctx.currentTime
+    // S1: Lub (longer, deeper pitch, 56Hz, ~0.15s)
+    this.playThump(now, 56, 0.15, 0.4)
+    // S2: Dub (sharper, slightly higher, 74Hz, ~0.11s, delayed by ~0.14s)
+    this.playThump(now + 0.14, 74, 0.11, 0.3)
+
+    const intervalMs = (60 / this.bpm) * 1000
+    this.timer = setTimeout(() => this.scheduleBeat(), intervalMs)
+  }
+}
+
+const RHYTHMS = [
+  { id: "normal", bpm: 72, label: "Normal Sinus (72 BPM)", badge: "Normal" },
+  { id: "tachy", bpm: 110, label: "Tachycardia (110 BPM)", badge: "Elevated" },
+  { id: "brady", bpm: 48, label: "Bradycardia (48 BPM)", badge: "Resting" }
+]
+
+const ANGLES = [
+  { id: "anterior", label: "Anterior Sternocostal" },
+  { id: "apical", label: "Apical 4-Chamber (A4C)" },
+  { id: "lateral", label: "Left Lateral Oblique" }
+]
 
 export default function CinematicIntro({ onEnterStudio, reducedMotion, setReducedMotion }) {
   const [isTransitioning, setIsTransitioning] = useState(false)
+  const [bpm, setBpm] = useState(72)
+  const [cameraAngle, setCameraAngle] = useState("anterior")
+  const [audioEnabled, setAudioEnabled] = useState(false)
+  const audioSynthRef = useRef(null)
+
+  useEffect(() => {
+    audioSynthRef.current = new HeartAudioSynth()
+    return () => {
+      if (audioSynthRef.current) audioSynthRef.current.stop()
+    }
+  }, [])
+
+  const toggleAudio = () => {
+    if (!audioSynthRef.current) return
+    if (audioEnabled) {
+      audioSynthRef.current.stop()
+      setAudioEnabled(false)
+    } else {
+      audioSynthRef.current.start(bpm)
+      setAudioEnabled(true)
+    }
+  }
+
+  const handleSelectRhythm = (newBpm) => {
+    setBpm(newBpm)
+    if (audioSynthRef.current && audioEnabled) {
+      audioSynthRef.current.setBpm(newBpm)
+    }
+  }
 
   const handleStartTransition = () => {
     if (isTransitioning) return
+    if (audioSynthRef.current) audioSynthRef.current.stop()
     setIsTransitioning(true)
   }
 
@@ -22,6 +135,8 @@ export default function CinematicIntro({ onEnterStudio, reducedMotion, setReduce
         isTransitioning={isTransitioning}
         onTransitionComplete={handleTransitionComplete}
         reducedMotion={reducedMotion}
+        bpm={bpm}
+        cameraAngle={cameraAngle}
       />
 
       {/* Atmospheric Vignette */}
@@ -85,11 +200,24 @@ export default function CinematicIntro({ onEnterStudio, reducedMotion, setReduce
           </div>
         </div>
 
-        <div className="flex items-center space-x-4">
-          <div className="hidden md:flex items-center space-x-2 text-[11px] text-slate-400 font-mono bg-slate-900/60 border border-white/5 px-3 py-1.5 rounded-full backdrop-blur-sm">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-            <span>R3D-18 Inference Engine Online</span>
-          </div>
+        <div className="flex items-center space-x-3 sm:space-x-4">
+          {/* Heartbeat Sound Synth Toggle */}
+          <motion.button
+            onClick={toggleAudio}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className={`flex items-center space-x-2 text-[11px] font-mono px-3 py-1.5 rounded-lg border transition cursor-pointer backdrop-blur-sm ${
+              audioEnabled
+                ? "bg-cyan-500/20 border-cyan-400/60 text-cyan-300 shadow-[0_0_15px_rgba(6,182,212,0.3)]"
+                : "bg-white/[0.02] border-white/10 text-slate-400 hover:text-white"
+            }`}
+            title="Toggle Web Audio Heartbeat Sound Synthesizer"
+          >
+            {audioEnabled ? <Volume2 className="w-3.5 h-3.5 text-cyan-400 animate-pulse" /> : <VolumeX className="w-3.5 h-3.5" />}
+            <span className="hidden sm:inline">{audioEnabled ? "Sound: ON" : "Sound: OFF"}</span>
+          </motion.button>
+
+          {/* Fluid Motion Toggle */}
           <motion.button
             onClick={() => setReducedMotion(!reducedMotion)}
             whileHover={{ scale: 1.05 }}
@@ -103,7 +231,7 @@ export default function CinematicIntro({ onEnterStudio, reducedMotion, setReduce
 
       {/* CENTER HERO */}
       <motion.div
-        className={`relative z-20 flex-1 flex flex-col justify-end pb-16 px-10 max-w-4xl mx-auto w-full text-center items-center`}
+        className={`relative z-20 flex-1 flex flex-col justify-end pb-10 sm:pb-14 px-6 sm:px-10 max-w-4xl mx-auto w-full text-center items-center`}
         initial={{ opacity: 0, y: 40 }}
         animate={{
           opacity: isTransitioning ? 0 : 1,
@@ -114,7 +242,7 @@ export default function CinematicIntro({ onEnterStudio, reducedMotion, setReduce
       >
         {/* Product Pill */}
         <motion.div
-          className="inline-flex items-center space-x-2 px-4 py-2 rounded-full border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm mb-8"
+          className="inline-flex items-center space-x-2 px-4 py-2 rounded-full border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm mb-6"
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.3, duration: 0.5 }}
@@ -130,9 +258,9 @@ export default function CinematicIntro({ onEnterStudio, reducedMotion, setReduce
           </span>
         </motion.div>
 
-        {/* Main Tagline with staggered letter animation */}
+        {/* Main Tagline */}
         <motion.h1
-          className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extralight tracking-tight text-white mb-5 leading-[1.05]"
+          className="text-4xl sm:text-6xl md:text-7xl font-extralight tracking-tight text-white mb-4 leading-[1.05]"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
@@ -151,7 +279,7 @@ export default function CinematicIntro({ onEnterStudio, reducedMotion, setReduce
         </motion.h1>
 
         <motion.p
-          className="max-w-xl text-base text-slate-400 font-light leading-relaxed mb-10"
+          className="max-w-xl text-sm sm:text-base text-slate-400 font-light leading-relaxed mb-6"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5, duration: 0.6 }}
@@ -159,6 +287,27 @@ export default function CinematicIntro({ onEnterStudio, reducedMotion, setReduce
           Automated LVEF quantification, endocardial segmentation, and
           explainable AI heatmaps — in seconds.
         </motion.p>
+
+        {/* Cardiac Rhythm Modulation Controls */}
+        <div className="flex flex-wrap items-center justify-center gap-2 mb-8">
+          <div className="text-[10px] font-mono text-slate-500 uppercase tracking-widest mr-1 flex items-center space-x-1">
+            <Activity className="w-3 h-3 text-cyan-400/80" />
+            <span>Rhythm:</span>
+          </div>
+          {RHYTHMS.map((r) => (
+            <button
+              key={r.id}
+              onClick={() => handleSelectRhythm(r.bpm)}
+              className={`px-3 py-1 rounded-full text-[11px] font-mono transition cursor-pointer border ${
+                bpm === r.bpm
+                  ? "bg-cyan-950/80 border-cyan-400 text-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.3)]"
+                  : "bg-white/[0.02] border-white/10 text-slate-400 hover:text-white"
+              }`}
+            >
+              {r.label}
+            </button>
+          ))}
+        </div>
 
         {/* ENTER BUTTON */}
         <motion.button
@@ -174,7 +323,6 @@ export default function CinematicIntro({ onEnterStudio, reducedMotion, setReduce
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 0.5 }}
         >
-          {/* Shine sweep */}
           <div className="absolute inset-0 w-1/3 h-full bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-12 -translate-x-full group-hover:translate-x-[400%] transition-transform duration-1000 ease-out" />
           <div className="relative flex items-center space-x-3">
             <span>Enter Analysis Studio</span>
@@ -190,13 +338,19 @@ export default function CinematicIntro({ onEnterStudio, reducedMotion, setReduce
 
       {/* Bottom Footer */}
       <motion.footer
-        className={`relative z-20 px-10 py-5 flex items-center justify-between text-[11px] text-slate-500 font-light tracking-wide`}
+        className={`relative z-20 px-8 sm:px-10 py-4 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-500 font-light tracking-wide gap-2`}
         initial={{ opacity: 0 }}
         animate={{ opacity: isTransitioning ? 0 : 1 }}
         transition={{ delay: 0.7, duration: 0.5 }}
       >
         <span>Stanford EchoNet-Dynamic · 10,030 Cases</span>
-        <span>MAE 4.18% · AHA/ASE Compliant</span>
+        <div className="flex items-center space-x-4">
+          <span className="flex items-center space-x-1.5 font-mono text-[10px] text-cyan-400/80">
+            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
+            <span>Active Rhythm: {bpm} BPM</span>
+          </span>
+          <span>MAE 4.18% · AHA/ASE Compliant</span>
+        </div>
       </motion.footer>
     </div>
   )
