@@ -13,7 +13,8 @@ import {
   Cpu,
   Layers,
   Play,
-  Zap
+  Zap,
+  Radio
 } from "lucide-react"
 
 // Verified Stanford EchoNet-Dynamic sample cases
@@ -63,6 +64,12 @@ const DEMO_CASES = [
     patient: { id: "STAN-TEST-1007", age: 49, sex: "Female" }
   }
 ]
+
+const PROBES = {
+  "S5-1": { name: "S5-1 Cardiac", type: "PureWave Sector", freq: "1.0 - 5.0 MHz", depth: "24 cm", sector: "90°" },
+  "X5-1": { name: "X5-1 xMATRIX", type: "3D Phased Array", freq: "1.0 - 5.0 MHz", depth: "22 cm", sector: "90°x90°" },
+  "S8-3": { name: "S8-3 High-Res", type: "Pediatric / High-Res", freq: "3.0 - 8.0 MHz", depth: "16 cm", sector: "90°" }
+}
 
 /* ====== 3D Tilt Hook ====== */
 function use3DTilt(intensity = 8) {
@@ -137,6 +144,7 @@ export default function UploadStudio({
   const [mediaType, setMediaType] = useState(null) // 'video' | 'image'
   const [isDragOver, setIsDragOver] = useState(false)
   const [videoError, setVideoError] = useState(false)
+  const [selectedProbe, setSelectedProbe] = useState("S5-1")
   const fileInputRef = useRef(null)
 
   const processFile = (file) => {
@@ -403,6 +411,38 @@ export default function UploadStudio({
                   />
                 ) : null}
               </motion.div>
+
+              {/* Acoustic Transducer Probe Selector */}
+              <div className="w-full max-w-md p-3.5 rounded-2xl bg-black/40 border border-white/5 mb-6 text-left">
+                <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 mb-2">
+                  <span className="flex items-center space-x-1.5">
+                    <Radio className="w-3.5 h-3.5 text-cyan-400" />
+                    <span className="text-white font-medium">Acoustic Transducer Probe</span>
+                  </span>
+                  <span className="text-cyan-400 font-bold">{PROBES[selectedProbe].freq}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {Object.entries(PROBES).map(([key, probe]) => (
+                    <button
+                      key={key}
+                      onClick={() => setSelectedProbe(key)}
+                      className={`p-2 rounded-xl text-left border transition cursor-pointer ${
+                        selectedProbe === key
+                          ? "bg-cyan-950/70 border-cyan-400 text-cyan-200 shadow-[0_0_12px_rgba(6,182,212,0.2)]"
+                          : "bg-white/[0.02] border-white/5 text-slate-400 hover:text-white"
+                      }`}
+                    >
+                      <div className="text-[11px] font-semibold font-mono">{probe.name}</div>
+                      <div className="text-[9px] text-slate-500 mt-0.5">{probe.type}</div>
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center justify-between text-[10px] font-mono text-slate-500 mt-2.5 pt-2 border-t border-white/5">
+                  <span>Depth: {PROBES[selectedProbe].depth}</span>
+                  <span>Sector: {PROBES[selectedProbe].sector}</span>
+                  <span className="text-emerald-400">Harmonics: THI Active</span>
+                </div>
+              </div>
 
               {/* MAIN CTA: START ANALYSIS */}
               <motion.button
