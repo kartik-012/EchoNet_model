@@ -431,6 +431,8 @@ export default function IntelligenceReport({
   const [gradCamOpacity, setGradCamOpacity] = useState(0.75)
   const [splitCompareMode, setSplitCompareMode] = useState(false)
   const [showSimpsonsDiscs, setShowSimpsonsDiscs] = useState(false)
+  const [hrInput, setHrInput] = useState(72)
+  const [bsaInput, setBsaInput] = useState(1.85)
   const playTimerRef = useRef(null)
   const [activeNav, setActiveNav] = useState("Analysis")
   const [reportTab, setReportTab] = useState("doctor")
@@ -736,6 +738,61 @@ export default function IntelligenceReport({
       {/* ================================================================ */}
       <AnimatedECGWave />
       <HUDDataTicker />
+
+      {/* HEMODYNAMICS INTERACTIVE STRIP */}
+      <div className="w-full bg-[#050b18]/90 border-y border-white/[0.06] px-4 sm:px-8 py-2 flex flex-wrap items-center justify-between text-xs font-mono backdrop-blur-md z-20 gap-2">
+        <div className="flex items-center space-x-4">
+          <span className="text-[11px] text-cyan-400 font-semibold uppercase tracking-wider flex items-center space-x-1.5">
+            <Heart size={13} className="text-rose-400 animate-pulse" />
+            <span>Hemodynamics:</span>
+          </span>
+
+          <div className="flex items-center space-x-1.5 text-slate-300">
+            <span>HR:</span>
+            <input
+              type="number"
+              min="40"
+              max="160"
+              value={hrInput}
+              onChange={(e) => setHrInput(Math.max(40, Math.min(160, parseInt(e.target.value) || 72)))}
+              className="w-12 px-1.5 py-0.5 rounded bg-black/60 border border-white/10 text-cyan-300 text-center font-bold"
+            />
+            <span className="text-slate-500 text-[10px]">bpm</span>
+          </div>
+
+          <div className="flex items-center space-x-1.5 text-slate-300">
+            <span>BSA:</span>
+            <input
+              type="number"
+              step="0.05"
+              min="1.0"
+              max="2.5"
+              value={bsaInput}
+              onChange={(e) => setBsaInput(Math.max(1.0, Math.min(2.5, parseFloat(e.target.value) || 1.85)))}
+              className="w-14 px-1.5 py-0.5 rounded bg-black/60 border border-white/10 text-cyan-300 text-center font-bold"
+            />
+            <span className="text-slate-500 text-[10px]">m²</span>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center space-x-4 text-slate-300">
+          <div>
+            <span className="text-slate-500 text-[10px]">Stroke Vol:</span>{" "}
+            <strong className="text-white">67.0 mL</strong>
+          </div>
+          <div>
+            <span className="text-slate-500 text-[10px]">Cardiac Output:</span>{" "}
+            <strong className="text-cyan-300">{((67.0 * hrInput) / 1000).toFixed(2)} L/min</strong>
+          </div>
+          <div>
+            <span className="text-slate-500 text-[10px]">Cardiac Index:</span>{" "}
+            <strong className="text-emerald-400">{(((67.0 * hrInput) / 1000) / bsaInput).toFixed(2)} L/min/m²</strong>
+          </div>
+          <span className="px-2 py-0.5 rounded bg-emerald-950/60 border border-emerald-500/30 text-[10px] text-emerald-300">
+            {(((67.0 * hrInput) / 1000) / bsaInput) >= 2.5 && (((67.0 * hrInput) / 1000) / bsaInput) <= 4.0 ? "Normal Index" : (((67.0 * hrInput) / 1000) / bsaInput) > 4.0 ? "Hyperdynamic" : "Depressed Index"}
+          </span>
+        </div>
+      </div>
 
       {/* ================================================================ */}
       {/* NAVIGATION HEADER */}
