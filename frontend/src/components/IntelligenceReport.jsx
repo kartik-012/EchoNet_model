@@ -37,7 +37,8 @@ import {
   CheckCircle,
   Printer,
   ArrowRight,
-  Search
+  Search,
+  Columns
 } from "lucide-react"
 import { generateClinicalPDF } from "../utils/pdfExport"
 
@@ -428,6 +429,7 @@ export default function IntelligenceReport({
   const [isPlaying, setIsPlaying] = useState(false)
   const [playbackSpeed, setPlaybackSpeed] = useState(70)
   const [gradCamOpacity, setGradCamOpacity] = useState(0.75)
+  const [splitCompareMode, setSplitCompareMode] = useState(false)
   const playTimerRef = useRef(null)
   const [activeNav, setActiveNav] = useState("Analysis")
   const [reportTab, setReportTab] = useState("doctor")
@@ -833,18 +835,70 @@ export default function IntelligenceReport({
                 <h3 className="panel-title">Imaging Analysis</h3>
                 <span className="panel-title-sub">Overview</span>
               </div>
-              <motion.div
-                className="panel-badge orange"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.8, type: "spring", stiffness: 500 }}
-              >
-                <span className="badge-dot pulse-dot"></span>
-                Complete
-              </motion.div>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => setSplitCompareMode(!splitCompareMode)}
+                  className={`px-2.5 py-1 rounded-lg text-[10px] font-mono border transition cursor-pointer flex items-center space-x-1.5 ${
+                    splitCompareMode
+                      ? "bg-cyan-500/20 border-cyan-400 text-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.3)]"
+                      : "bg-white/[0.04] border-white/10 text-slate-400 hover:text-white"
+                  }`}
+                  title="Toggle Side-by-Side End-Diastole vs End-Systole Comparison"
+                >
+                  <Columns size={11} className="text-cyan-400" />
+                  <span>{splitCompareMode ? "Quad View" : "Split ED/ES"}</span>
+                </button>
+
+                <motion.div
+                  className="panel-badge orange"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.8, type: "spring", stiffness: 500 }}
+                >
+                  <span className="badge-dot pulse-dot"></span>
+                  Complete
+                </motion.div>
+              </div>
             </div>
 
-            <div className="imaging-grid">
+            {splitCompareMode ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-2 relative">
+                {/* End-Diastole Card */}
+                <div className="rounded-2xl border border-emerald-500/30 bg-black/60 p-3 flex flex-col">
+                  <div className="flex items-center justify-between mb-2 text-xs font-mono">
+                    <span className="text-emerald-400 font-bold flex items-center space-x-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                      <span>END-DIASTOLE (Frame 1)</span>
+                    </span>
+                    <span className="text-slate-400">LVEDV: 132.6 mL</span>
+                  </div>
+                  <div className="h-56 rounded-xl bg-black overflow-hidden relative flex items-center justify-center border border-white/5">
+                    <img src={activeContourED} alt="End-Diastole" className="h-full object-contain" />
+                    <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/80 text-[10px] font-mono text-emerald-300 border border-emerald-500/30">
+                      MAXIMAL LV EXPANSION
+                    </div>
+                  </div>
+                </div>
+
+                {/* End-Systole Card */}
+                <div className="rounded-2xl border border-rose-500/30 bg-black/60 p-3 flex flex-col">
+                  <div className="flex items-center justify-between mb-2 text-xs font-mono">
+                    <span className="text-rose-400 font-bold flex items-center space-x-1.5">
+                      <span className="w-2 h-2 rounded-full bg-rose-400" />
+                      <span>END-SYSTOLE (Frame 16)</span>
+                    </span>
+                    <span className="text-slate-400">LVESV: 65.6 mL</span>
+                  </div>
+                  <div className="h-56 rounded-xl bg-black overflow-hidden relative flex items-center justify-center border border-white/5">
+                    <img src={activeContourES} alt="End-Systole" className="h-full object-contain" />
+                    <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-black/80 text-[10px] font-mono text-rose-300 border border-rose-500/30">
+                      PEAK SYSTOLIC CONTRACTION
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="imaging-grid">
               {[
                 { label: "Original Echo", icon: <Eye size={10} />, src: activeFrameSrc, hasControls: true },
                 { label: "Grad-CAM Heatmap", icon: <Sparkles size={10} />, src: activeOverlaySrc, isHeatmap: true },
@@ -943,6 +997,7 @@ export default function IntelligenceReport({
                 </motion.div>
               ))}
             </div>
+            )}
           </Panel3D>
 
           {/* SPATIOTEMPORAL ANALYSIS */}
