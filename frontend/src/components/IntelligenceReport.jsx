@@ -431,6 +431,10 @@ export default function IntelligenceReport({
   const [gradCamOpacity, setGradCamOpacity] = useState(0.75)
   const [splitCompareMode, setSplitCompareMode] = useState(false)
   const [showSimpsonsDiscs, setShowSimpsonsDiscs] = useState(false)
+  const [caliperActive, setCaliperActive] = useState(false)
+  const [caliperPoints, setCaliperPoints] = useState([])
+  const [lvidd, setLvidd] = useState(4.8)
+  const [lvids, setLvids] = useState(3.1)
   const [hrInput, setHrInput] = useState(72)
   const [bsaInput, setBsaInput] = useState(1.85)
   const playTimerRef = useRef(null)
@@ -496,6 +500,30 @@ export default function IntelligenceReport({
     link.download = `echocard_frame_${currentFrame + 1}.png`
     link.href = activeFrameSrc
     link.click()
+  }
+
+  const handleViewportClick = (e) => {
+    if (!caliperActive) return
+    const rect = e.currentTarget.getBoundingClientRect()
+    const x = ((e.clientX - rect.left) / rect.width) * 100
+    const y = ((e.clientY - rect.top) / rect.height) * 100
+    if (caliperPoints.length >= 2) {
+      setCaliperPoints([{ x, y }])
+    } else {
+      const nextPts = [...caliperPoints, { x, y }]
+      setCaliperPoints(nextPts)
+      if (nextPts.length === 2) {
+        const dx = nextPts[1].x - nextPts[0].x
+        const dy = nextPts[1].y - nextPts[0].y
+        const distPct = Math.sqrt(dx * dx + dy * dy)
+        const distCm = ((distPct / 100) * 12.5).toFixed(2)
+        if (currentFrame <= 4 || currentFrame >= 28) {
+          setLvidd(parseFloat(distCm))
+        } else {
+          setLvids(parseFloat(distCm))
+        }
+      }
+    }
   }
 
   const activeFrameRaw = result?.all_frames_cineloop?.[currentFrame] || result?.visualizations?.original_frame
@@ -975,7 +1003,11 @@ export default function IntelligenceReport({
                     {cell.icon}
                     <span>{cell.label}</span>
                   </div>
-                  <div className={`imaging-cell-viewport ${cell.isHeatmap ? "heatmap-viewport" : ""}`}>
+                  <div
+                    className={`imaging-cell-viewport ${cell.isHeatmap ? "heatmap-viewport" : ""}`}
+                    onClick={cell.hasControls && caliperActive ? handleViewportClick : undefined}
+                    style={{ cursor: cell.hasControls && caliperActive ? "crosshair" : "default" }}
+                  >
                     <img
                       src={cell.src}
                       alt={cell.label}
@@ -1027,10 +1059,60 @@ export default function IntelligenceReport({
                           >
                             Discs
                           </button>
+                          <button
+                            className={`img-ctrl-btn text-[9px] font-mono px-1.5 transition ${caliperActive ? "text-amber-300 bg-amber-950/90 border border-amber-400/50 shadow-[0_0_8px_rgba(251,191,36,0.4)]" : "text-slate-400"}`}
+                            onClick={() => { setCaliperActive(!caliperActive); setCaliperPoints([]) }}
+                            title="Toggle Electronic Caliper Measurement"
+                          >
+                            Caliper
+                          </button>
                         </div>
                         <div className="imaging-frame-count">{currentFrame + 1} / 32</div>
                         <button className="imaging-expand"><Maximize2 size={10} /></button>
                       </>
+                    )}
+                    {cell.hasControls && caliperActive && (
+                      <div className="absolute top-2 left-2 z-20 flex items-center space-x-2 px-2.5 py-1 rounded bg-black/85 backdrop-blur-md border border-amber-500/40 text-[10px] font-mono text-amber-300">
+                        <span>CALIPER: {caliperPoints.length === 0 ? "Click Point 1" : caliperPoints.length === 1 ? "Click Point 2" : `${((Math.sqrt(Math.pow(caliperPoints[1].x - caliperPoints[0].x, 2) + Math.pow(caliperPoints[1].y - caliperPoints[0].y, 2)) / 100) * 12.5).toFixed(2)} cm`}</span>
+                        <span className="text-slate-400">| LVIDd: {lvidd}cm LVIDs: {lvids}cm (FS: {(((lvidd - lvids) / lvidd) * 100).toFixed(1)}%)</span>
+                        {caliperPoints.length > 0 && (
+                          <button onClick={(e) => { e.stopPropagation(); setCaliperPoints([]) }} className="text-rose-400 hover:text-rose-300 underline ml-1">Reset</button>
+                        )}
+                      </div>
+                    )}
+                    {cell.hasControls && caliperPoints.length > 0 && (
+                      <svg className="absolute inset-0 w-full h-full pointer-events-none z-15">
+                        {caliperPoints.map((pt, idx) => (
+                          <g key={idx}>
+                            <line x1={`${pt.x}%`} y1={`${pt.y - 3}%`} x2={`${pt.x}%`} y2={`${pt.y + 3}%`} stroke="#facc15" strokeWidth="2" />
+                            <line x1={`${pt.x - 3}%`} y1={`${pt.y}%`} x2={`${pt.x + 3}%`} y2={`${pt.y}%`} stroke="#facc15" strokeWidth="2" />
+                            <circle cx={`${pt.x}%`} cy={`${pt.y}%`} r="3" fill="#facc15" />
+                          </g>
+                        ))}
+                        {caliperPoints.length === 2 && (
+                          <>
+                            <line
+                              x1={`${caliperPoints[0].x}%`}
+                              y1={`${caliperPoints[0].y}%`}
+                              x2={`${caliperPoints[1].x}%`}
+                              y2={`${caliperPoints[1].y}%`}
+                              stroke="#facc15"
+                              strokeWidth="1.5"
+                              strokeDasharray="4,4"
+                            />
+                            <text
+                              x={`${(caliperPoints[0].x + caliperPoints[1].x) / 2}%`}
+                              y={`${(caliperPoints[0].y + caliperPoints[1].y) / 2 - 2}%`}
+                              fill="#fef08a"
+                              fontSize="9"
+                              fontFamily="monospace"
+                              textAnchor="middle"
+                            >
+                              {((Math.sqrt(Math.pow(caliperPoints[1].x - caliperPoints[0].x, 2) + Math.pow(caliperPoints[1].y - caliperPoints[0].y, 2)) / 100) * 12.5).toFixed(2)} cm
+                            </text>
+                          </>
+                        )}
+                      </svg>
                     )}
                     {cell.hasControls && showSimpsonsDiscs && (
                       <svg className="absolute inset-0 w-full h-full pointer-events-none z-10" viewBox="0 0 200 200">
