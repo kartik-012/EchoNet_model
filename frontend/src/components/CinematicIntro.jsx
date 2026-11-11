@@ -288,25 +288,51 @@ export default function CinematicIntro({ onEnterStudio, reducedMotion, setReduce
           explainable AI heatmaps — in seconds.
         </motion.p>
 
-        {/* Cardiac Rhythm Modulation Controls */}
-        <div className="flex flex-wrap items-center justify-center gap-2 mb-8">
-          <div className="text-[10px] font-mono text-slate-500 uppercase tracking-widest mr-1 flex items-center space-x-1">
-            <Activity className="w-3 h-3 text-cyan-400/80" />
-            <span>Rhythm:</span>
+        {/* Viewpoint & Rhythm Modulation Controls */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-8">
+          {/* Cardiac Rhythm */}
+          <div className="flex items-center space-x-1.5">
+            <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest mr-1 flex items-center space-x-1">
+              <Activity className="w-3 h-3 text-cyan-400/80" />
+              <span>Rhythm:</span>
+            </span>
+            {RHYTHMS.map((r) => (
+              <button
+                key={r.id}
+                onClick={() => handleSelectRhythm(r.bpm)}
+                className={`px-2.5 py-1 rounded-full text-[10px] font-mono transition cursor-pointer border ${
+                  bpm === r.bpm
+                    ? "bg-cyan-950/80 border-cyan-400 text-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.3)]"
+                    : "bg-white/[0.02] border-white/10 text-slate-400 hover:text-white"
+                }`}
+              >
+                {r.label.split(" (")[0]}
+              </button>
+            ))}
           </div>
-          {RHYTHMS.map((r) => (
-            <button
-              key={r.id}
-              onClick={() => handleSelectRhythm(r.bpm)}
-              className={`px-3 py-1 rounded-full text-[11px] font-mono transition cursor-pointer border ${
-                bpm === r.bpm
-                  ? "bg-cyan-950/80 border-cyan-400 text-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.3)]"
-                  : "bg-white/[0.02] border-white/10 text-slate-400 hover:text-white"
-              }`}
-            >
-              {r.label}
-            </button>
-          ))}
+
+          <div className="hidden sm:block w-px h-4 bg-white/10" />
+
+          {/* Camera Viewpoint */}
+          <div className="flex items-center space-x-1.5">
+            <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest mr-1 flex items-center space-x-1">
+              <Eye className="w-3 h-3 text-cyan-400/80" />
+              <span>3D View:</span>
+            </span>
+            {ANGLES.map((a) => (
+              <button
+                key={a.id}
+                onClick={() => setCameraAngle(a.id)}
+                className={`px-2.5 py-1 rounded-full text-[10px] font-mono transition cursor-pointer border ${
+                  cameraAngle === a.id
+                    ? "bg-cyan-950/80 border-cyan-400 text-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.3)]"
+                    : "bg-white/[0.02] border-white/10 text-slate-400 hover:text-white"
+                }`}
+              >
+                {a.id.toUpperCase()}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* ENTER BUTTON */}
