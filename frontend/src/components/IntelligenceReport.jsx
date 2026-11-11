@@ -335,6 +335,87 @@ function Panel3D({ children, className = "", delay = 0, tiltIntensity = 6 }) {
   )
 }
 
+/* ====== AHA 17-Segment Bullseye Polar Plot Component ====== */
+function AHA17SegmentPlot() {
+  const [activeSeg, setActiveSeg] = useState(null)
+
+  const SEGMENTS = [
+    { id: 1, name: "Basal Anterior", artery: "LAD", strain: -20.1, path: "M 100 15 A 85 85 0 0 1 173.6 57.5 L 149.3 70 A 57 57 0 0 0 100 43 Z" },
+    { id: 2, name: "Basal Anteroseptal", artery: "LAD", strain: -21.4, path: "M 173.6 57.5 A 85 85 0 0 1 173.6 142.5 L 149.3 130 A 57 57 0 0 0 149.3 70 Z" },
+    { id: 3, name: "Basal Inferoseptal", artery: "RCA", strain: -19.2, path: "M 173.6 142.5 A 85 85 0 0 1 100 185 L 100 157 A 57 57 0 0 0 149.3 130 Z" },
+    { id: 4, name: "Basal Inferior", artery: "RCA", strain: -18.7, path: "M 100 185 A 85 85 0 0 1 26.4 142.5 L 50.7 130 A 57 57 0 0 0 100 157 Z" },
+    { id: 5, name: "Basal Inferolateral", artery: "LCx", strain: -19.6, path: "M 26.4 142.5 A 85 85 0 0 1 26.4 57.5 L 50.7 70 A 57 57 0 0 0 50.7 130 Z" },
+    { id: 6, name: "Basal Anterolateral", artery: "LAD/LCx", strain: -20.8, path: "M 26.4 57.5 A 85 85 0 0 1 100 15 L 100 43 A 57 57 0 0 0 50.7 70 Z" },
+
+    { id: 7, name: "Mid Anterior", artery: "LAD", strain: -21.0, path: "M 100 43 A 57 57 0 0 1 149.3 70 L 129.7 82.5 A 34 34 0 0 0 100 66 Z" },
+    { id: 8, name: "Mid Anteroseptal", artery: "LAD", strain: -22.3, path: "M 149.3 70 A 57 57 0 0 1 149.3 130 L 129.7 117.5 A 34 34 0 0 0 129.7 82.5 Z" },
+    { id: 9, name: "Mid Inferoseptal", artery: "RCA", strain: -19.8, path: "M 149.3 130 A 57 57 0 0 1 100 157 L 100 134 A 34 34 0 0 0 129.7 117.5 Z" },
+    { id: 10, name: "Mid Inferior", artery: "RCA", strain: -18.9, path: "M 100 157 A 57 57 0 0 1 50.7 130 L 70.3 117.5 A 34 34 0 0 0 100 134 Z" },
+    { id: 11, name: "Mid Inferolateral", artery: "LCx", strain: -20.4, path: "M 50.7 130 A 57 57 0 0 1 50.7 70 L 70.3 82.5 A 34 34 0 0 0 70.3 117.5 Z" },
+    { id: 12, name: "Mid Anterolateral", artery: "LAD/LCx", strain: -21.5, path: "M 50.7 70 A 57 57 0 0 1 100 43 L 100 66 A 34 34 0 0 0 70.3 82.5 Z" },
+
+    { id: 13, name: "Apical Anterior", artery: "LAD", strain: -22.6, path: "M 100 66 A 34 34 0 0 1 134 100 L 118 100 A 18 18 0 0 0 100 82 Z" },
+    { id: 14, name: "Apical Septal", artery: "LAD", strain: -23.1, path: "M 134 100 A 34 34 0 0 1 100 134 L 100 118 A 18 18 0 0 0 118 100 Z" },
+    { id: 15, name: "Apical Inferior", artery: "RCA", strain: -20.5, path: "M 100 134 A 34 34 0 0 1 66 100 L 82 100 A 18 18 0 0 0 100 118 Z" },
+    { id: 16, name: "Apical Lateral", artery: "LCx", strain: -21.8, path: "M 66 100 A 34 34 0 0 1 100 66 L 100 82 A 18 18 0 0 0 82 100 Z" }
+  ]
+
+  const currentDisplaySeg = activeSeg || { id: 17, name: "Apex (True Apical Cap)", artery: "LAD", strain: -23.4, score: 1 }
+
+  return (
+    <div className="flex flex-col items-center">
+      <div className="relative w-48 h-48 mb-3">
+        <svg viewBox="0 0 200 200" className="w-full h-full filter drop-shadow-[0_0_12px_rgba(6,182,212,0.2)]">
+          {/* Outer circle guidelines */}
+          <circle cx="100" cy="100" r="85" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
+          <circle cx="100" cy="100" r="57" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
+          <circle cx="100" cy="100" r="34" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
+
+          {/* 16 Ring Segments */}
+          {SEGMENTS.map((s) => {
+            const isHovered = activeSeg?.id === s.id
+            return (
+              <path
+                key={s.id}
+                d={s.path}
+                fill={isHovered ? "#22d3ee" : s.artery.includes("LAD") ? "rgba(6,182,212,0.6)" : s.artery.includes("RCA") ? "rgba(59,130,246,0.6)" : "rgba(168,85,247,0.6)"}
+                stroke="#040711"
+                strokeWidth="1.5"
+                className="cursor-pointer transition-all duration-200 hover:brightness-125"
+                onMouseEnter={() => setActiveSeg(s)}
+              />
+            )
+          })}
+
+          {/* Central Apex Segment 17 */}
+          <circle
+            cx="100"
+            cy="100"
+            r="18"
+            fill={activeSeg?.id === 17 ? "#22d3ee" : "rgba(6,182,212,0.75)"}
+            stroke="#040711"
+            strokeWidth="1.5"
+            className="cursor-pointer transition-all duration-200 hover:brightness-125"
+            onMouseEnter={() => setActiveSeg({ id: 17, name: "Apex (True Apical Cap)", artery: "LAD", strain: -23.4, score: 1 })}
+          />
+        </svg>
+      </div>
+
+      {/* Selected Segment Readout Card */}
+      <div className="w-full p-2.5 rounded-xl bg-slate-950/80 border border-white/5 text-[10px] font-mono">
+        <div className="flex items-center justify-between text-white font-semibold">
+          <span>Seg #{currentDisplaySeg.id}: {currentDisplaySeg.name}</span>
+          <span className="text-emerald-400">Normal (Score 1)</span>
+        </div>
+        <div className="flex items-center justify-between text-slate-400 mt-1">
+          <span>Territory: <strong className="text-cyan-300">{currentDisplaySeg.artery}</strong></span>
+          <span>Strain: <strong className="text-cyan-300">{currentDisplaySeg.strain}%</strong></span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 /* ====== Main Component ====== */
 export default function IntelligenceReport({
   result,
@@ -1087,9 +1168,29 @@ export default function IntelligenceReport({
         </div>
 
         {/* ============================================================ */}
-        {/* ROW 2: Clinical Safety | Statistical Validation | Multi-Center | FAISS */}
+        {/* ROW 2: Clinical Safety | AHA 17-Segment | Statistical Validation | Multi-Center | FAISS */}
         {/* ============================================================ */}
         <div className="dash-row dash-row-2">
+
+          {/* AHA 17-SEGMENT POLAR MAP */}
+          <Panel3D className="aha-panel" delay={0.55}>
+            <div className="panel-header">
+              <div className="panel-title-group">
+                <Activity size={14} className="panel-icon" />
+                <h3 className="panel-title">AHA 17-Segment Polar Map</h3>
+                <span className="panel-title-sub">WMSI: 1.00</span>
+              </div>
+              <motion.div
+                className="panel-badge green"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 1.2, type: "spring", stiffness: 500 }}
+              >
+                Normal Motion
+              </motion.div>
+            </div>
+            <AHA17SegmentPlot />
+          </Panel3D>
 
           {/* CLINICAL SAFETY & QUALITY */}
           <Panel3D className="safety-panel" delay={0.6}>
