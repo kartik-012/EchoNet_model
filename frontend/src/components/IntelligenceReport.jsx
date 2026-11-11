@@ -430,6 +430,7 @@ export default function IntelligenceReport({
   const [playbackSpeed, setPlaybackSpeed] = useState(70)
   const [gradCamOpacity, setGradCamOpacity] = useState(0.75)
   const [splitCompareMode, setSplitCompareMode] = useState(false)
+  const [showSimpsonsDiscs, setShowSimpsonsDiscs] = useState(false)
   const playTimerRef = useRef(null)
   const [activeNav, setActiveNav] = useState("Analysis")
   const [reportTab, setReportTab] = useState("doctor")
@@ -962,10 +963,40 @@ export default function IntelligenceReport({
                           <button className="img-ctrl-btn" onClick={handleExportFrame} title="Export Current Frame as PNG">
                             <Download size={10} />
                           </button>
+                          <button
+                            className={`img-ctrl-btn text-[9px] font-mono px-1.5 transition ${showSimpsonsDiscs ? "text-cyan-300 bg-cyan-950/90 border border-cyan-400/50 shadow-[0_0_8px_rgba(6,182,212,0.4)]" : "text-slate-400"}`}
+                            onClick={() => setShowSimpsonsDiscs(!showSimpsonsDiscs)}
+                            title="Toggle Biplane Simpson's 20-Disc Summation Overlay"
+                          >
+                            Discs
+                          </button>
                         </div>
                         <div className="imaging-frame-count">{currentFrame + 1} / 32</div>
                         <button className="imaging-expand"><Maximize2 size={10} /></button>
                       </>
+                    )}
+                    {cell.hasControls && showSimpsonsDiscs && (
+                      <svg className="absolute inset-0 w-full h-full pointer-events-none z-10" viewBox="0 0 200 200">
+                        <line x1="100" y1="28" x2="100" y2="175" stroke="#06b6d4" strokeWidth="1.5" strokeDasharray="3,3" opacity="0.8" />
+                        <line x1="68" y1="175" x2="132" y2="175" stroke="#22c55e" strokeWidth="2" opacity="0.9" />
+                        {Array.from({ length: 10 }).map((_, di) => {
+                          const y = 42 + di * 13
+                          const halfW = Math.sin((di / 9) * Math.PI) * 38 + 6
+                          return (
+                            <line
+                              key={di}
+                              x1={100 - halfW}
+                              y1={y}
+                              x2={100 + halfW}
+                              y2={y}
+                              stroke="#06b6d4"
+                              strokeWidth="1"
+                              opacity="0.65"
+                            />
+                          )
+                        })}
+                        <text x="8" y="16" fill="#22d3ee" fontSize="8" fontFamily="monospace">Simpson's Discs (20-Disc Summation)</text>
+                      </svg>
                     )}
                     {cell.isHeatmap && (
                       <div className="heatmap-opacity flex items-center space-x-1.5 px-2 py-0.5 rounded-full bg-black/75 backdrop-blur-md border border-white/10">
