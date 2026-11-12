@@ -150,6 +150,7 @@ export default function UploadStudio({
   const [zoomLevel, setZoomLevel] = useState(1.0)
   const [gainDb, setGainDb] = useState(52)
   const [showSectorGrid, setShowSectorGrid] = useState(true)
+  const [batchQueue, setBatchQueue] = useState([])
   const fileInputRef = useRef(null)
 
   const processFile = (file) => {
@@ -162,22 +163,55 @@ export default function UploadStudio({
     setPreviewUrl(url)
   }
 
-  const handleFileChange = (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+  const processFiles = (files) => {
+    if (!files || files.length === 0) return
+    const fileList = Array.from(files)
+    setBatchQueue(fileList)
+    processFile(fileList[0])
+  }
+
+  const handleSelectBatchItem = (file) => {
     processFile(file)
+  }
+
+  const handleRemoveBatchItem = (index, e) => {
+    if (e) e.stopPropagation()
+    const nextQueue = batchQueue.filter((_, i) => i !== index)
+    setBatchQueue(nextQueue)
+    if (selectedFile === batchQueue[index]) {
+      if (nextQueue.length > 0) {
+        processFile(nextQueue[0])
+      } else {
+        handleClearSelection()
+      }
+    }
+  }
+
+  const handleFileChange = (e) => {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+    if (files.length > 1) {
+      processFiles(files)
+    } else {
+      processFile(files[0])
+      setBatchQueue([files[0]])
+    }
   }
 
   const handleDrop = (e) => {
     e.preventDefault()
     setIsDragOver(false)
-    if (e.dataTransfer.files?.[0]) {
+    if (e.dataTransfer.files?.length > 1) {
+      processFiles(e.dataTransfer.files)
+    } else if (e.dataTransfer.files?.[0]) {
       processFile(e.dataTransfer.files[0])
+      setBatchQueue([e.dataTransfer.files[0]])
     }
   }
 
   const handleSelectDemo = (demo) => {
     setSelectedFile(null)
+    setBatchQueue([])
     setSelectedDemo(demo)
     setMediaType("video")
     setPreviewUrl(null)
@@ -187,6 +221,7 @@ export default function UploadStudio({
   const handleClearSelection = () => {
     setSelectedFile(null)
     setSelectedDemo(null)
+    setBatchQueue([])
     setPreviewUrl(null)
     setMediaType(null)
     setVideoError(false)
@@ -364,6 +399,40 @@ export default function UploadStudio({
                   </motion.button>
                 </div>
               </div>
+
+              {/* Batch Study Queue Strip */}
+              {batchQueue.length > 1 && (
+                <div className="w-full mb-5 p-3 rounded-2xl bg-black/50 border border-white/5 flex flex-col space-y-2">
+                  <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 px-1">
+                    <span className="flex items-center space-x-1.5 text-cyan-300 font-medium">
+                      <Layers className="w-3.5 h-3.5" />
+                      <span>Multi-View Batch Study Queue ({batchQueue.length} files staged)</span>
+                    </span>
+                    <span className="text-[10px] text-slate-500">Click a file to preview & analyze</span>
+                  </div>
+                  <div className="flex items-center space-x-2 overflow-x-auto pb-1 scrollbar-none">
+                    {batchQueue.map((item, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => handleSelectBatchItem(item)}
+                        className={`flex items-center space-x-2 px-3 py-1.5 rounded-xl border text-[11px] font-mono transition whitespace-nowrap cursor-pointer ${
+                          selectedFile === item
+                            ? "bg-cyan-950/80 border-cyan-400 text-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.3)]"
+                            : "bg-white/[0.02] border-white/10 text-slate-400 hover:text-white"
+                        }`}
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+                        <span className="max-w-[130px] truncate">{item.name}</span>
+                        <span className="text-[9px] text-slate-500">{(item.size / 1024).toFixed(0)}KB</span>
+                        <X
+                          className="w-3 h-3 hover:text-rose-400 ml-1 transition"
+                          onClick={(e) => handleRemoveBatchItem(idx, e)}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Acoustic Viewport Controls Bar */}
               <div className="w-full max-w-md flex items-center justify-between px-3 py-1.5 rounded-xl bg-black/60 border border-white/5 mb-2 text-[10px] font-mono">
@@ -743,6 +812,7 @@ export default function UploadStudio({
         <input
           ref={fileInputRef}
           type="file"
+          multiple
           accept=".avi,.mp4,.mov,.mkv,.webm,.png,.jpg,.jpeg,.bmp,.dcm"
           onChange={handleFileChange}
           className="hidden"
