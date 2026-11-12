@@ -431,6 +431,7 @@ export default function IntelligenceReport({
   const [gradCamOpacity, setGradCamOpacity] = useState(0.75)
   const [splitCompareMode, setSplitCompareMode] = useState(false)
   const [showSimpsonsDiscs, setShowSimpsonsDiscs] = useState(false)
+  const [showColorDoppler, setShowColorDoppler] = useState(false)
   const [caliperActive, setCaliperActive] = useState(false)
   const [caliperPoints, setCaliperPoints] = useState([])
   const [lvidd, setLvidd] = useState(4.8)
@@ -1067,6 +1068,13 @@ export default function IntelligenceReport({
                           >
                             Caliper
                           </button>
+                          <button
+                            className={`img-ctrl-btn text-[9px] font-mono px-1.5 transition ${showColorDoppler ? "text-amber-300 bg-amber-950/90 border border-amber-400/50 shadow-[0_0_8px_rgba(251,191,36,0.4)]" : "text-slate-400"}`}
+                            onClick={() => setShowColorDoppler(!showColorDoppler)}
+                            title="Toggle Barton Color Doppler Flow Velocity Jet Overlay"
+                          >
+                            Doppler
+                          </button>
                         </div>
                         <div className="imaging-frame-count">{currentFrame + 1} / 32</div>
                         <button className="imaging-expand"><Maximize2 size={10} /></button>
@@ -1137,6 +1145,46 @@ export default function IntelligenceReport({
                         })}
                         <text x="8" y="16" fill="#22d3ee" fontSize="8" fontFamily="monospace">Simpson's Discs (20-Disc Summation)</text>
                       </svg>
+                    )}
+                    {cell.hasControls && showColorDoppler && (
+                      <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
+                        {/* Doppler Inflow / Outflow Flow Jet Simulation */}
+                        <svg className="w-full h-full" viewBox="0 0 200 200">
+                          <defs>
+                            <radialGradient id="inflowJet" cx="50%" cy="65%" r="35%">
+                              <stop offset="0%" stopColor="#ef4444" stopOpacity="0.8" />
+                              <stop offset="50%" stopColor="#f59e0b" stopOpacity="0.6" />
+                              <stop offset="100%" stopColor="transparent" stopOpacity="0" />
+                            </radialGradient>
+                            <radialGradient id="outflowJet" cx="52%" cy="40%" r="30%">
+                              <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.8" />
+                              <stop offset="60%" stopColor="#2563eb" stopOpacity="0.55" />
+                              <stop offset="100%" stopColor="transparent" stopOpacity="0" />
+                            </radialGradient>
+                          </defs>
+
+                          {/* Phase-dependent jet display */}
+                          {currentFrame <= 5 || currentFrame >= 23 ? (
+                            <ellipse cx="100" cy="118" rx="28" ry="42" fill="url(#inflowJet)" opacity="0.8" />
+                          ) : (
+                            <ellipse cx="105" cy="82" rx="22" ry="34" fill="url(#outflowJet)" opacity="0.8" />
+                          )}
+                        </svg>
+
+                        {/* Color Doppler Nyquist Velocity Scale Bar */}
+                        <div className="absolute top-3 right-3 flex flex-col items-center bg-black/75 backdrop-blur-md p-1 rounded-md border border-white/10 text-[8px] font-mono">
+                          <span className="text-rose-400 font-bold">+64</span>
+                          <div className="w-2.5 h-14 my-0.5 rounded-sm bg-gradient-to-b from-rose-500 via-amber-400 via-black to-cyan-400 to-blue-600" />
+                          <span className="text-cyan-400 font-bold">-64</span>
+                          <span className="text-[7px] text-slate-400 mt-0.5">cm/s</span>
+                        </div>
+
+                        <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/80 text-[9px] font-mono text-amber-300 border border-amber-500/30">
+                          {currentFrame <= 5 || currentFrame >= 23
+                            ? "COLOR DOPPLER: Transmitral Diastolic Inflow (+52 cm/s)"
+                            : "COLOR DOPPLER: Aortic Systolic Outflow (-48 cm/s)"}
+                        </div>
+                      </div>
                     )}
                     {cell.isHeatmap && (
                       <div className="heatmap-opacity flex items-center space-x-1.5 px-2 py-0.5 rounded-full bg-black/75 backdrop-blur-md border border-white/10">
