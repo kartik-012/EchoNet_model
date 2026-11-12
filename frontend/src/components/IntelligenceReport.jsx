@@ -339,6 +339,41 @@ function Panel3D({ children, className = "", delay = 0, tiltIntensity = 6 }) {
 /* ====== AHA 17-Segment Bullseye Polar Plot Component ====== */
 function AHA17SegmentPlot() {
   const [activeSeg, setActiveSeg] = useState(null)
+  const [segScores, setSegScores] = useState({
+    1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1,
+    7: 1, 8: 1, 9: 1, 10: 1, 11: 1, 12: 1,
+    13: 1, 14: 1, 15: 1, 16: 1, 17: 1
+  })
+
+  const SCORE_CONFIG = {
+    1: { label: "Normal", color: "rgba(6,182,212,0.65)", hex: "#22d3ee", textClass: "text-cyan-400" },
+    2: { label: "Hypokinetic", color: "rgba(245,158,11,0.75)", hex: "#f59e0b", textClass: "text-amber-400" },
+    3: { label: "Akinetic", color: "rgba(239,68,68,0.75)", hex: "#ef4444", textClass: "text-rose-400" },
+    4: { label: "Dyskinetic", color: "rgba(168,85,247,0.75)", hex: "#c084fc", textClass: "text-purple-400" }
+  }
+
+  const toggleScore = (id) => {
+    setSegScores((prev) => ({
+      ...prev,
+      [id]: (prev[id] % 4) + 1
+    }))
+  }
+
+  const setExplicitScore = (id, score) => {
+    setSegScores((prev) => ({
+      ...prev,
+      [id]: score
+    }))
+  }
+
+  const handleResetScores = () => {
+    const normal = {}
+    for (let i = 1; i <= 17; i++) normal[i] = 1
+    setSegScores(normal)
+  }
+
+  const totalScore = Object.values(segScores).reduce((a, b) => a + b, 0)
+  const wmsi = (totalScore / 17).toFixed(2)
 
   const SEGMENTS = [
     { id: 1, name: "Basal Anterior", artery: "LAD", strain: -20.1, path: "M 100 15 A 85 85 0 0 1 173.6 57.5 L 149.3 70 A 57 57 0 0 0 100 43 Z" },
@@ -361,11 +396,27 @@ function AHA17SegmentPlot() {
     { id: 16, name: "Apical Lateral", artery: "LCx", strain: -21.8, path: "M 66 100 A 34 34 0 0 1 100 66 L 100 82 A 18 18 0 0 0 82 100 Z" }
   ]
 
-  const currentDisplaySeg = activeSeg || { id: 17, name: "Apex (True Apical Cap)", artery: "LAD", strain: -23.4, score: 1 }
+  const currentDisplaySeg = activeSeg || { id: 17, name: "Apex (True Apical Cap)", artery: "LAD", strain: -23.4 }
+  const currentSegScore = segScores[currentDisplaySeg.id] || 1
 
   return (
     <div className="flex flex-col items-center">
-      <div className="relative w-48 h-48 mb-3">
+      {/* Top WMSI Bar */}
+      <div className="w-full flex items-center justify-between text-[11px] font-mono px-1 mb-2">
+        <span className="text-slate-400">
+          WMSI: <strong className={wmsi === "1.00" ? "text-emerald-400" : "text-amber-400"}>{wmsi}</strong>
+          <span className="text-[9px] text-slate-500 ml-1">({wmsi === "1.00" ? "Normal" : "Wall Motion Abnormality"})</span>
+        </span>
+        <button
+          onClick={handleResetScores}
+          className="text-[10px] text-cyan-400 hover:text-cyan-300 underline cursor-pointer"
+          title="Reset all 17 segments to Score 1 (Normal)"
+        >
+          Reset All
+        </button>
+      </div>
+
+      <div className="relative w-48 h-48 mb-2">
         <svg viewBox="0 0 200 200" className="w-full h-full filter drop-shadow-[0_0_12px_rgba(6,182,212,0.2)]">
           {/* Outer circle guidelines */}
           <circle cx="100" cy="100" r="85" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
@@ -375,15 +426,18 @@ function AHA17SegmentPlot() {
           {/* 16 Ring Segments */}
           {SEGMENTS.map((s) => {
             const isHovered = activeSeg?.id === s.id
+            const sc = segScores[s.id] || 1
+            const fillCol = isHovered ? SCORE_CONFIG[sc].hex : SCORE_CONFIG[sc].color
             return (
               <path
                 key={s.id}
                 d={s.path}
-                fill={isHovered ? "#22d3ee" : s.artery.includes("LAD") ? "rgba(6,182,212,0.6)" : s.artery.includes("RCA") ? "rgba(59,130,246,0.6)" : "rgba(168,85,247,0.6)"}
+                fill={fillCol}
                 stroke="#040711"
                 strokeWidth="1.5"
                 className="cursor-pointer transition-all duration-200 hover:brightness-125"
                 onMouseEnter={() => setActiveSeg(s)}
+                onClick={() => toggleScore(s.id)}
               />
             )
           })}
@@ -393,24 +447,45 @@ function AHA17SegmentPlot() {
             cx="100"
             cy="100"
             r="18"
-            fill={activeSeg?.id === 17 ? "#22d3ee" : "rgba(6,182,212,0.75)"}
+            fill={activeSeg?.id === 17 ? SCORE_CONFIG[segScores[17]].hex : SCORE_CONFIG[segScores[17]].color}
             stroke="#040711"
             strokeWidth="1.5"
             className="cursor-pointer transition-all duration-200 hover:brightness-125"
-            onMouseEnter={() => setActiveSeg({ id: 17, name: "Apex (True Apical Cap)", artery: "LAD", strain: -23.4, score: 1 })}
+            onMouseEnter={() => setActiveSeg({ id: 17, name: "Apex (True Apical Cap)", artery: "LAD", strain: -23.4 })}
+            onClick={() => toggleScore(17)}
           />
         </svg>
       </div>
 
-      {/* Selected Segment Readout Card */}
-      <div className="w-full p-2.5 rounded-xl bg-slate-950/80 border border-white/5 text-[10px] font-mono">
+      {/* Selected Segment Readout & Score Editor Card */}
+      <div className="w-full p-2.5 rounded-xl bg-slate-950/80 border border-white/5 text-[10px] font-mono flex flex-col space-y-1.5">
         <div className="flex items-center justify-between text-white font-semibold">
           <span>Seg #{currentDisplaySeg.id}: {currentDisplaySeg.name}</span>
-          <span className="text-emerald-400">Normal (Score 1)</span>
+          <span className={SCORE_CONFIG[currentSegScore].textClass}>
+            {SCORE_CONFIG[currentSegScore].label} (Score {currentSegScore})
+          </span>
         </div>
-        <div className="flex items-center justify-between text-slate-400 mt-1">
+        <div className="flex items-center justify-between text-slate-400">
           <span>Territory: <strong className="text-cyan-300">{currentDisplaySeg.artery}</strong></span>
           <span>Strain: <strong className="text-cyan-300">{currentDisplaySeg.strain}%</strong></span>
+        </div>
+        {/* Quick Score Selectors */}
+        <div className="flex items-center space-x-1 pt-1 border-t border-white/5">
+          <span className="text-[9px] text-slate-500 mr-1">Set:</span>
+          {[1, 2, 3, 4].map((s) => (
+            <button
+              key={s}
+              onClick={() => setExplicitScore(currentDisplaySeg.id, s)}
+              className={`px-1.5 py-0.5 rounded text-[9px] transition cursor-pointer ${
+                currentSegScore === s
+                  ? "bg-cyan-500/30 text-cyan-300 border border-cyan-400/50"
+                  : "bg-white/[0.03] text-slate-400 hover:text-white"
+              }`}
+            >
+              {s}:{SCORE_CONFIG[s].label.slice(0, 4)}
+            </button>
+          ))}
+          <span className="text-[8px] text-slate-500 ml-auto">(Click map to cycle)</span>
         </div>
       </div>
     </div>
@@ -961,7 +1036,7 @@ export default function IntelligenceReport({
                     <span className="text-slate-400">LVEDV: 132.6 mL</span>
                   </div>
                   <div className="h-56 rounded-xl bg-black overflow-hidden relative flex items-center justify-center border border-white/5">
-                    <img src={activeContourED} alt="End-Diastole" className="h-full object-contain" />
+                    <img src={activeContourED} alt="End-Diastole" className="h-full object-contain" onError={(e) => { e.target.onerror = null; e.target.src = "/sample_echo.webp" }} />
                     <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/80 text-[10px] font-mono text-emerald-300 border border-emerald-500/30">
                       MAXIMAL LV EXPANSION
                     </div>
@@ -978,7 +1053,7 @@ export default function IntelligenceReport({
                     <span className="text-slate-400">LVESV: 65.6 mL</span>
                   </div>
                   <div className="h-56 rounded-xl bg-black overflow-hidden relative flex items-center justify-center border border-white/5">
-                    <img src={activeContourES} alt="End-Systole" className="h-full object-contain" />
+                    <img src={activeContourES} alt="End-Systole" className="h-full object-contain" onError={(e) => { e.target.onerror = null; e.target.src = "/thumb_overlay.png" }} />
                     <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-black/80 text-[10px] font-mono text-rose-300 border border-rose-500/30">
                       PEAK SYSTOLIC CONTRACTION
                     </div>
@@ -1773,7 +1848,7 @@ export default function IntelligenceReport({
                   whileHover={{ scale: 1.03, x: 4, borderColor: "rgba(6,182,212,0.3)" }}
                 >
                   <div className="faiss-case-thumb">
-                    <img src="/sample_echo.webp" alt={`Case ${c.id}`} className="faiss-thumb-img" />
+                    <img src="/sample_echo.webp" alt={`Case ${c.id}`} className="faiss-thumb-img" onError={(e) => { e.target.onerror = null; e.target.src = "/thumb_bmode.jpg" }} />
                   </div>
                   <div className="faiss-case-info">
                     <span className="faiss-case-id">Case {c.id}</span>
