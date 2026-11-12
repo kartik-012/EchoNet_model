@@ -1233,7 +1233,19 @@ export default function IntelligenceReport({
                 <div className="vol-y-axis">
                   <span>150</span><span>100</span><span>50</span><span>0</span>
                 </div>
-                <svg viewBox="0 0 300 120" className="vol-svg" preserveAspectRatio="none">
+                <svg
+                  viewBox="0 0 300 120"
+                  className="vol-svg cursor-pointer"
+                  preserveAspectRatio="none"
+                  onClick={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect()
+                    const clickX = e.clientX - rect.left
+                    const targetFrame = Math.round((clickX / rect.width) * 31)
+                    setIsPlaying(false)
+                    setCurrentFrame(Math.max(0, Math.min(31, targetFrame)))
+                  }}
+                  title="Click to seek to cardiac cycle volume frame"
+                >
                   <defs>
                     <linearGradient id="volFill" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.3" />
@@ -1278,6 +1290,55 @@ export default function IntelligenceReport({
                 </svg>
                 <div className="vol-x-axis">
                   {[1, 4, 8, 12, 16, 20, 24, 28, 32].map(n => <span key={n}>{n}</span>)}
+                </div>
+
+                {/* Synchronized Lead II ECG Gating Strip */}
+                <div className="mt-3 pt-2.5 border-t border-white/5 flex flex-col space-y-1.5">
+                  <div className="flex items-center justify-between text-[10px] font-mono">
+                    <span className="text-slate-400 flex items-center space-x-1">
+                      <Activity size={10} className="text-emerald-400" />
+                      <span>Lead II ECG Gating</span>
+                    </span>
+                    <span className="text-emerald-400 font-medium">
+                      {currentFrame <= 3 || currentFrame >= 29
+                        ? "R-Wave Peak (End-Diastole)"
+                        : currentFrame >= 14 && currentFrame <= 18
+                        ? "T-Wave Peak (End-Systole)"
+                        : currentFrame < 14
+                        ? "Ventricular Ejection (ST Segment)"
+                        : "Ventricular Diastasis (TP Interval)"}
+                    </span>
+                  </div>
+                  <div
+                    className="relative w-full h-8 bg-black/40 rounded-lg border border-white/5 overflow-hidden cursor-pointer"
+                    onClick={(e) => {
+                      const rect = e.currentTarget.getBoundingClientRect()
+                      const clickX = e.clientX - rect.left
+                      const targetFrame = Math.round((clickX / rect.width) * 31)
+                      setIsPlaying(false)
+                      setCurrentFrame(Math.max(0, Math.min(31, targetFrame)))
+                    }}
+                    title="Click to jump to ECG cardiac cycle phase"
+                  >
+                    <svg className="w-full h-full" viewBox="0 0 320 32" preserveAspectRatio="none">
+                      <path
+                        d="M 0,16 L 30,16 L 40,16 L 45,13 L 50,19 L 55,16 L 75,16 L 80,18 L 85,2 L 90,26 L 95,16 L 120,16 L 135,10 L 150,16 L 190,16 L 200,16 L 205,13 L 210,19 L 215,16 L 235,16 L 240,18 L 245,2 L 250,26 L 255,16 L 280,16 L 295,10 L 310,16 L 320,16"
+                        fill="none"
+                        stroke="#22c55e"
+                        strokeWidth="1.2"
+                        opacity="0.85"
+                      />
+                      {/* Synchronized tracking cursor */}
+                      <line
+                        x1={(currentFrame / 31) * 320}
+                        y1="0"
+                        x2={(currentFrame / 31) * 320}
+                        y2="32"
+                        stroke="#06b6d4"
+                        strokeWidth="2"
+                      />
+                    </svg>
+                  </div>
                 </div>
               </div>
             </div>
