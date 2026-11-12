@@ -15,8 +15,33 @@ import {
   Play,
   Zap,
   Radio,
-  FileText
+  FileText,
+  Search,
+  Copy,
+  Check
 } from "lucide-react"
+
+const DICOM_TAG_CATALOG = [
+  { tag: "(0008,0008)", vr: "CS", name: "Image Type", category: "physics", value: "ORIGINAL\\PRIMARY\\0001" },
+  { tag: "(0008,0016)", vr: "UI", name: "SOP Class UID", category: "demographics", value: "1.2.840.10008.5.1.4.1.1.3.1 (US Multi-frame)" },
+  { tag: "(0008,0060)", vr: "CS", name: "Modality", category: "demographics", value: "US (Ultrasound)" },
+  { tag: "(0008,0070)", vr: "LO", name: "Manufacturer", category: "physics", value: "Philips Medical Systems" },
+  { tag: "(0008,1090)", vr: "LO", name: "Manufacturer Model Name", category: "physics", value: "EPIQ CVx Cardiac" },
+  { tag: "(0010,0010)", vr: "PN", name: "Patient Name", category: "demographics", value: "ANONYMIZED^STANFORD" },
+  { tag: "(0010,0020)", vr: "LO", name: "Patient ID", category: "demographics", value: "STAN-2025-0891" },
+  { tag: "(0018,1063)", vr: "DS", name: "Frame Time", category: "spacing", value: "20.0 ms (50.0 FPS)" },
+  { tag: "(0018,6011)", vr: "SQ", name: "Ultrasound Region Sequence", category: "physics", value: "Sector Spatial Calibration Active" },
+  { tag: "(0018,6024)", vr: "US", name: "Physical Units X Direction", category: "spacing", value: "3 (Centimeters)" },
+  { tag: "(0018,6026)", vr: "US", name: "Physical Units Y Direction", category: "spacing", value: "3 (Centimeters)" },
+  { tag: "(0018,602C)", vr: "FD", name: "Physical Delta X", category: "spacing", value: "0.0384 cm/pixel" },
+  { tag: "(0018,602E)", vr: "FD", name: "Physical Delta Y", category: "spacing", value: "0.0384 cm/pixel" },
+  { tag: "(0028,0004)", vr: "CS", name: "Photometric Interpretation", category: "spacing", value: "MONOCHROME2 / YBR_FULL" },
+  { tag: "(0028,0008)", vr: "IS", name: "Number of Frames", category: "spacing", value: "116 cine frames" },
+  { tag: "(0028,0010)", vr: "US", name: "Rows", category: "spacing", value: "112 px" },
+  { tag: "(0028,0011)", vr: "US", name: "Columns", category: "spacing", value: "112 px" },
+  { tag: "(0028,0100)", vr: "US", name: "Bits Allocated", category: "spacing", value: "8 bits" },
+  { tag: "(0040,0244)", vr: "DA", name: "Procedure Step Date", category: "demographics", value: "2025-10-24" }
+]
 
 // Verified Stanford EchoNet-Dynamic sample cases
 const DEMO_CASES = [
@@ -151,7 +176,17 @@ export default function UploadStudio({
   const [gainDb, setGainDb] = useState(52)
   const [showSectorGrid, setShowSectorGrid] = useState(true)
   const [batchQueue, setBatchQueue] = useState([])
+  const [dicomSearchQuery, setDicomSearchQuery] = useState("")
+  const [dicomCategory, setDicomCategory] = useState("all")
+  const [copiedDicom, setCopiedDicom] = useState(false)
   const fileInputRef = useRef(null)
+
+  const handleCopyDicom = () => {
+    const jsonStr = JSON.stringify(DICOM_TAG_CATALOG, null, 2)
+    navigator.clipboard?.writeText(jsonStr)
+    setCopiedDicom(true)
+    setTimeout(() => setCopiedDicom(false), 2000)
+  }
 
   const processFile = (file) => {
     setSelectedDemo(null)
@@ -737,64 +772,107 @@ export default function UploadStudio({
               }}
             >
               <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="w-full max-w-xl bg-[#070e24] border border-cyan-500/40 rounded-2xl shadow-2xl overflow-hidden font-mono text-xs flex flex-col max-h-[80vh]"
+                initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                className="w-full max-w-2xl bg-[#070e24] border border-cyan-500/40 rounded-2xl shadow-2xl overflow-hidden font-mono text-xs flex flex-col max-h-[85vh]"
               >
+                {/* Header */}
                 <div className="p-4 border-b border-white/10 bg-slate-950 flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <FileText className="w-4 h-4 text-cyan-400" />
-                    <span className="font-semibold text-white uppercase">DICOM Header Metadata Inspector</span>
+                    <span className="font-semibold text-white uppercase tracking-wide">PACS DICOM Header Tag Inspector</span>
                   </div>
-                  <button
-                    onClick={() => setIsDicomModalOpen(false)}
-                    className="p-1 rounded-lg text-slate-400 hover:text-white transition cursor-pointer"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-
-                <div className="p-5 overflow-y-auto space-y-4">
-                  <div className="grid grid-cols-2 gap-2 text-[11px]">
-                    <div className="p-2.5 rounded-lg bg-black/40 border border-white/5">
-                      <span className="text-slate-500 block text-[9px] uppercase">SOP Class UID</span>
-                      <span className="text-cyan-300">1.2.840.10008.5.1.4.1.1.3.1</span>
-                      <span className="text-slate-500 block text-[9px] mt-0.5">Ultrasound Multiframe Image</span>
-                    </div>
-                    <div className="p-2.5 rounded-lg bg-black/40 border border-white/5">
-                      <span className="text-slate-500 block text-[9px] uppercase">Ultrasound Unit</span>
-                      <span className="text-white">Philips EPIQ CVx</span>
-                      <span className="text-slate-500 block text-[9px] mt-0.5">Cardiology Cart</span>
-                    </div>
-                    <div className="p-2.5 rounded-lg bg-black/40 border border-white/5">
-                      <span className="text-slate-500 block text-[9px] uppercase">Transducer / Probe</span>
-                      <span className="text-teal-300">{PROBES[selectedProbe].name}</span>
-                      <span className="text-slate-500 block text-[9px] mt-0.5">{PROBES[selectedProbe].type}</span>
-                    </div>
-                    <div className="p-2.5 rounded-lg bg-black/40 border border-white/5">
-                      <span className="text-slate-500 block text-[9px] uppercase">Acoustic Frequency</span>
-                      <span className="text-sky-300">{PROBES[selectedProbe].freq}</span>
-                      <span className="text-slate-500 block text-[9px] mt-0.5">Tissue Harmonic Imaging (THI)</span>
-                    </div>
-                    <div className="p-2.5 rounded-lg bg-black/40 border border-white/5">
-                      <span className="text-slate-500 block text-[9px] uppercase">Safety Indices</span>
-                      <span className="text-emerald-400">MI: 1.0 • TIS: 0.6</span>
-                      <span className="text-slate-500 block text-[9px] mt-0.5">ALARA Compliant</span>
-                    </div>
-                    <div className="p-2.5 rounded-lg bg-black/40 border border-white/5">
-                      <span className="text-slate-500 block text-[9px] uppercase">Frame Rate / Spacing</span>
-                      <span className="text-white">50.0 fps • 0.0384 cm/px</span>
-                      <span className="text-slate-500 block text-[9px] mt-0.5">Calibrated Spatiotemporal Grid</span>
-                    </div>
-                  </div>
-
-                  <div className="p-3 rounded-lg bg-cyan-950/30 border border-cyan-500/20 text-[10px] text-cyan-200/90 leading-relaxed">
-                    DICOM Cine Metadata conforms to DICOM PS 3.3 Annex A.6 (Ultrasound Image IOD).
-                    Spatial and temporal metadata will be preserved in downstream PACS archive integration.
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={handleCopyDicom}
+                      className="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg border border-white/10 bg-white/[0.04] text-[10px] text-slate-300 hover:text-white hover:border-cyan-400/40 transition cursor-pointer"
+                    >
+                      {copiedDicom ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                      <span>{copiedDicom ? "Copied JSON" : "Copy Tags"}</span>
+                    </button>
+                    <button
+                      onClick={() => setIsDicomModalOpen(false)}
+                      className="p-1 rounded-lg text-slate-400 hover:text-white transition cursor-pointer"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
 
+                {/* Filter & Search Bar */}
+                <div className="p-3 border-b border-white/5 bg-black/40 flex flex-col sm:flex-row items-center justify-between gap-2.5">
+                  <div className="relative w-full sm:w-64">
+                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      placeholder="Search tag hex or name..."
+                      value={dicomSearchQuery}
+                      onChange={(e) => setDicomSearchQuery(e.target.value)}
+                      className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-black/60 border border-white/10 text-[11px] text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                    />
+                  </div>
+                  <div className="flex items-center space-x-1.5 self-start sm:self-auto overflow-x-auto">
+                    {[
+                      { id: "all", label: "All Tags" },
+                      { id: "physics", label: "Physics/Cart" },
+                      { id: "spacing", label: "Spacing/Grid" },
+                      { id: "demographics", label: "Demographics" }
+                    ].map((cat) => (
+                      <button
+                        key={cat.id}
+                        onClick={() => setDicomCategory(cat.id)}
+                        className={`px-2.5 py-1 rounded-lg text-[10px] font-mono transition cursor-pointer border ${
+                          dicomCategory === cat.id
+                            ? "bg-cyan-950/80 border-cyan-400 text-cyan-300"
+                            : "bg-white/[0.02] border-white/10 text-slate-400 hover:text-white"
+                        }`}
+                      >
+                        {cat.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Tag Table */}
+                <div className="p-4 overflow-y-auto space-y-3 flex-1">
+                  <div className="rounded-xl border border-white/5 bg-black/50 overflow-hidden">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="border-b border-white/10 bg-slate-950/80 text-[10px] text-slate-400 uppercase tracking-wider">
+                          <th className="p-2.5">Tag</th>
+                          <th className="p-2.5">VR</th>
+                          <th className="p-2.5">Attribute Name</th>
+                          <th className="p-2.5">Value</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/5 text-[11px]">
+                        {DICOM_TAG_CATALOG
+                          .filter((t) => dicomCategory === "all" || t.category === dicomCategory)
+                          .filter((t) =>
+                            !dicomSearchQuery ||
+                            t.tag.toLowerCase().includes(dicomSearchQuery.toLowerCase()) ||
+                            t.name.toLowerCase().includes(dicomSearchQuery.toLowerCase()) ||
+                            t.value.toLowerCase().includes(dicomSearchQuery.toLowerCase())
+                          )
+                          .map((tag, idx) => (
+                            <tr key={idx} className="hover:bg-cyan-950/20 transition">
+                              <td className="p-2.5 text-cyan-400 font-bold">{tag.tag}</td>
+                              <td className="p-2.5 text-amber-300/80 font-mono text-[10px]">{tag.vr}</td>
+                              <td className="p-2.5 text-slate-200">{tag.name}</td>
+                              <td className="p-2.5 text-slate-300 font-mono max-w-[200px] truncate">{tag.value}</td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="p-2.5 rounded-lg bg-cyan-950/30 border border-cyan-500/20 text-[10px] text-cyan-200/90 leading-relaxed">
+                    DICOM PS 3.3 Annex A.6 compliant. Preserves spatiotemporal delta calibration (0.0384 cm/px, 50 FPS) for automated single-plane Simpson's rule calculations.
+                  </div>
+                </div>
+
+                {/* Footer */}
                 <div className="p-3 border-t border-white/10 bg-slate-950 flex justify-end">
                   <button
                     onClick={() => setIsDicomModalOpen(false)}
