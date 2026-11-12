@@ -127,6 +127,67 @@ function ECGTrace() {
   )
 }
 
+/* ====== Pulsed-Wave Spectral Doppler Velocity Waveform ====== */
+function SpectralDopplerWaveform({ currentStage }) {
+  return (
+    <div className="w-80 h-16 rounded-xl bg-black/60 border border-white/5 p-2 mb-5 relative overflow-hidden flex flex-col justify-between">
+      <div className="flex items-center justify-between text-[9px] font-mono text-slate-400 z-10">
+        <span className="flex items-center space-x-1 text-cyan-300">
+          <Activity className="w-2.5 h-2.5" />
+          <span>PW Doppler Transmitral Inflow</span>
+        </span>
+        <span className="text-emerald-400 font-bold">E/A: 1.37 (Normal)</span>
+      </div>
+
+      {/* Doppler Velocity Envelope SVG */}
+      <svg className="w-full h-9 overflow-visible" viewBox="0 0 300 40">
+        <defs>
+          <linearGradient id="dopplerGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.8" />
+            <stop offset="60%" stopColor="#3b82f6" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="transparent" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+
+        {/* Baseline 0 m/s */}
+        <line x1="0" y1="36" x2="300" y2="36" stroke="rgba(255,255,255,0.15)" strokeWidth="0.8" strokeDasharray="3,3" />
+
+        {/* E-wave & A-wave velocity curves (repeated over 2 beats) */}
+        <path
+          d="
+            M 10,36 
+            C 25,36 35,4 48,4 
+            C 60,4 70,36 85,36 
+            C 92,36 98,16 108,16 
+            C 118,16 124,36 135,36 
+            L 155,36
+            C 170,36 180,4 193,4 
+            C 205,4 215,36 230,36 
+            C 237,36 243,16 253,16 
+            C 263,16 269,36 280,36 
+            L 300,36
+          "
+          fill="url(#dopplerGrad)"
+          stroke="#22d3ee"
+          strokeWidth="1.2"
+        />
+
+        {/* Peak velocity markers */}
+        <text x="44" y="12" fill="#67e8f9" fontSize="6" fontFamily="monospace">E (0.85m/s)</text>
+        <text x="105" y="24" fill="#93c5fd" fontSize="6" fontFamily="monospace">A (0.62m/s)</text>
+        <text x="189" y="12" fill="#67e8f9" fontSize="6" fontFamily="monospace">E (0.85m/s)</text>
+        <text x="250" y="24" fill="#93c5fd" fontSize="6" fontFamily="monospace">A (0.62m/s)</text>
+      </svg>
+
+      <div className="flex items-center justify-between text-[8px] font-mono text-slate-500 z-10 border-t border-white/5 pt-0.5">
+        <span>PSV: 1.15 m/s</span>
+        <span>Decel Time: 185 ms</span>
+        <span>Mean Grad: 2.1 mmHg</span>
+      </div>
+    </div>
+  )
+}
+
 /* ====== Data Stream Particles ====== */
 function DataStreamParticles() {
   const particles = useRef(
@@ -372,6 +433,9 @@ export default function ProcessingEnvironment({
 
               {/* ECG Trace */}
               <ECGTrace />
+
+              {/* Pulsed-Wave Spectral Doppler Inflow Envelope */}
+              <SpectralDopplerWaveform currentStage={currentStage} />
 
               {/* Title */}
               <motion.h2
