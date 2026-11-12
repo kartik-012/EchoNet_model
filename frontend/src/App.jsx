@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "motion/react"
+import { Cpu, History, Eye, HelpCircle } from "lucide-react"
 import CinematicIntro from "./components/CinematicIntro"
 import UploadStudio from "./components/UploadStudio"
 import ProcessingEnvironment from "./components/ProcessingEnvironment"
@@ -12,7 +13,8 @@ export default function App() {
   // Application Stage: 'intro' | 'studio' | 'processing' | 'report'
   const [currentView, setCurrentView] = useState("intro")
 
-  // Accessibility: Reduced Motion
+  // Accessibility: High-Contrast & Reduced Motion
+  const [highContrast, setHighContrast] = useState(false)
   const [reducedMotion, setReducedMotion] = useState(false)
 
   // Backend Health Telemetry
@@ -107,7 +109,81 @@ export default function App() {
   }
 
   return (
-    <div className="w-full min-h-screen bg-[#040711] text-slate-100 font-sans overflow-x-hidden">
+    <div className={`w-full min-h-screen bg-[#040711] text-slate-100 font-sans overflow-x-hidden ${highContrast ? "high-contrast-mode" : ""}`}>
+      {/* Top Cyber-Medical System Telemetry Bar */}
+      <div className="cyber-telemetry-bar w-full px-4 py-1.5 flex items-center justify-between text-[11px] font-mono z-40 relative">
+        <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-1.5 text-cyan-400">
+            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+            <span className="font-bold tracking-wider">ECHOCARD-AI</span>
+          </div>
+          <span className="text-slate-600 hidden sm:inline">|</span>
+          <div className="flex items-center space-x-1.5 text-slate-400 hidden sm:flex">
+            <Cpu size={12} className="text-cyan-400" />
+            <span>CUDA RTX 3050 (12ms WS)</span>
+          </div>
+          <span className="text-slate-600 hidden md:inline">|</span>
+          <span className="text-slate-400 hidden md:inline">DICOM PS 3.3 • 32F @ 50fps</span>
+        </div>
+
+        {/* View Switcher / Quick Navigation */}
+        <div className="flex items-center space-x-1">
+          {[
+            { id: "intro", label: "Intro" },
+            { id: "studio", label: "Studio" },
+            { id: "report", label: "Report", disabled: !reportResult }
+          ].map((v) => (
+            <button
+              key={v.id}
+              disabled={v.disabled}
+              onClick={() => setCurrentView(v.id)}
+              className={`px-2 py-0.5 rounded text-[10px] transition cursor-pointer ${
+                currentView === v.id
+                  ? "bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 font-bold"
+                  : v.disabled
+                  ? "text-slate-600 cursor-not-allowed opacity-40"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              {v.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Global Action Icons */}
+        <div className="flex items-center space-x-2 text-slate-400">
+          <button
+            onClick={() => setHighContrast(!highContrast)}
+            className={`p-1 rounded hover:text-white transition cursor-pointer flex items-center space-x-1 ${
+              highContrast ? "text-amber-400 bg-amber-950/40 border border-amber-500/30" : "text-slate-400"
+            }`}
+            title="Toggle Clinical High-Contrast Mode"
+          >
+            <Eye size={12} />
+            <span className="text-[9px] hidden lg:inline">{highContrast ? "Contrast ON" : "Contrast"}</span>
+          </button>
+
+          <button
+            onClick={() => setIsHistoryOpen(true)}
+            className="p-1 rounded hover:text-white transition cursor-pointer flex items-center space-x-1"
+            title="View Study History"
+          >
+            <History size={12} className="text-cyan-400" />
+            <span className="text-[10px] bg-cyan-950/80 text-cyan-300 px-1 rounded-full border border-cyan-500/30">
+              {studyHistory.length}
+            </span>
+          </button>
+
+          <button
+            onClick={() => setIsModelInfoOpen(true)}
+            className="p-1 rounded hover:text-white transition cursor-pointer"
+            title="Model Verification & Benchmark (Press ?)"
+          >
+            <HelpCircle size={12} />
+          </button>
+        </div>
+      </div>
+
       <AnimatePresence mode="wait">
         {/* 1. CINEMATIC 3D INTRODUCTION */}
         {currentView === "intro" && (
