@@ -547,6 +547,7 @@ export default function IntelligenceReport({
   const [splitCompareMode, setSplitCompareMode] = useState(false)
   const [selectedAcousticView, setSelectedAcousticView] = useState("A4C")
   const [showSimpsonsDiscs, setShowSimpsonsDiscs] = useState(false)
+  const [volumeMethod, setVolumeMethod] = useState("simpsons") // "simpsons" | "arealength"
   const [showColorDoppler, setShowColorDoppler] = useState(false)
   const [caliperActive, setCaliperActive] = useState(false)
   const [caliperPoints, setCaliperPoints] = useState([])
@@ -1213,8 +1214,17 @@ export default function IntelligenceReport({
                             onClick={() => setShowSimpsonsDiscs(!showSimpsonsDiscs)}
                             title="Toggle Biplane Simpson's 20-Disc Summation Overlay"
                           >
-                            Discs
+                            {showSimpsonsDiscs ? (volumeMethod === "simpsons" ? "Discs" : "Area-Length") : "Discs"}
                           </button>
+                          {showSimpsonsDiscs && (
+                            <button
+                              className="img-ctrl-btn text-[8px] font-mono px-1 text-cyan-400 hover:text-cyan-200 border border-cyan-500/30"
+                              onClick={() => setVolumeMethod(m => m === "simpsons" ? "arealength" : "simpsons")}
+                              title="Switch between 20-Disc Summation and Single-Plane Area-Length (8*A^2 / 3*pi*L)"
+                            >
+                              {volumeMethod === "simpsons" ? "→ A-L" : "→ Discs"}
+                            </button>
+                          )}
                           <button
                             className={`img-ctrl-btn text-[9px] font-mono px-1.5 transition ${caliperActive ? "text-amber-300 bg-amber-950/90 border border-amber-400/50 shadow-[0_0_8px_rgba(251,191,36,0.4)]" : "text-slate-400"}`}
                             onClick={() => { setCaliperActive(!caliperActive); setCaliperPoints([]) }}
@@ -1279,25 +1289,44 @@ export default function IntelligenceReport({
                     )}
                     {cell.hasControls && showSimpsonsDiscs && (
                       <svg className="absolute inset-0 w-full h-full pointer-events-none z-10" viewBox="0 0 200 200">
-                        <line x1="100" y1="28" x2="100" y2="175" stroke="#06b6d4" strokeWidth="1.5" strokeDasharray="3,3" opacity="0.8" />
-                        <line x1="68" y1="175" x2="132" y2="175" stroke="#22c55e" strokeWidth="2" opacity="0.9" />
-                        {Array.from({ length: 10 }).map((_, di) => {
-                          const y = 42 + di * 13
-                          const halfW = Math.sin((di / 9) * Math.PI) * 38 + 6
-                          return (
-                            <line
-                              key={di}
-                              x1={100 - halfW}
-                              y1={y}
-                              x2={100 + halfW}
-                              y2={y}
-                              stroke="#06b6d4"
-                              strokeWidth="1"
-                              opacity="0.65"
-                            />
-                          )
-                        })}
-                        <text x="8" y="16" fill="#22d3ee" fontSize="8" fontFamily="monospace">Simpson's Discs (20-Disc Summation)</text>
+                        {volumeMethod === "simpsons" ? (
+                          <>
+                            <line x1="100" y1="28" x2="100" y2="175" stroke="#06b6d4" strokeWidth="1.5" strokeDasharray="3,3" opacity="0.8" />
+                            <line x1="68" y1="175" x2="132" y2="175" stroke="#22c55e" strokeWidth="2" opacity="0.9" />
+                            {Array.from({ length: 10 }).map((_, di) => {
+                              const y = 42 + di * 13
+                              const halfW = Math.sin((di / 9) * Math.PI) * 38 + 6
+                              return (
+                                <line
+                                  key={di}
+                                  x1={100 - halfW}
+                                  y1={y}
+                                  x2={100 + halfW}
+                                  y2={y}
+                                  stroke="#06b6d4"
+                                  strokeWidth="1"
+                                  opacity="0.65"
+                                />
+                              )
+                            })}
+                            <text x="8" y="16" fill="#22d3ee" fontSize="8" fontFamily="monospace">Simpson's Rule: 20 Cylindrical Discs</text>
+                            <text x="8" y="26" fill="#94a3b8" fontSize="7" fontFamily="monospace">V = ∑ (π/4 · a_i · b_i · h_i) = 132.6 mL</text>
+                          </>
+                        ) : (
+                          <>
+                            {/* Area-Length Method Geometric Visualizer */}
+                            <ellipse cx="100" cy="108" rx="38" ry="62" fill="rgba(6,182,212,0.12)" stroke="#06b6d4" strokeWidth="1.5" strokeDasharray="4,2" />
+                            {/* Long Axis Length L */}
+                            <line x1="100" y1="46" x2="100" y2="170" stroke="#f59e0b" strokeWidth="2" />
+                            <circle cx="100" cy="46" r="3" fill="#f59e0b" />
+                            <circle cx="100" cy="170" r="3" fill="#f59e0b" />
+                            {/* Mitral Annulus Base */}
+                            <line x1="68" y1="170" x2="132" y2="170" stroke="#22c55e" strokeWidth="2" />
+                            <text x="8" y="16" fill="#f59e0b" fontSize="8" fontFamily="monospace">Single-Plane Area-Length (A-L)</text>
+                            <text x="8" y="26" fill="#22d3ee" fontSize="7" fontFamily="monospace">Area A = 38.4 cm² • Length L = 8.2 cm</text>
+                            <text x="8" y="36" fill="#a7f3d0" fontSize="7" fontFamily="monospace">V = (8·A²) / (3π·L) = 136.2 mL (+2.7%)</text>
+                          </>
+                        )}
                       </svg>
                     )}
                     {cell.hasControls && showColorDoppler && (
