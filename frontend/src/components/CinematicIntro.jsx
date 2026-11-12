@@ -12,6 +12,7 @@ class HeartAudioSynth {
     this.isPlaying = false
     this.timer = null
     this.bpm = 72
+    this.volume = 0.5
   }
 
   start(bpm = 72) {
@@ -37,6 +38,10 @@ class HeartAudioSynth {
     this.bpm = bpm
   }
 
+  setVolume(vol) {
+    this.volume = Math.max(0, Math.min(1, vol))
+  }
+
   playThump(time, freq, dur, vol) {
     if (!this.ctx) return
     const osc = this.ctx.createOscillator()
@@ -50,7 +55,8 @@ class HeartAudioSynth {
     filter.type = "lowpass"
     filter.frequency.setValueAtTime(130, time)
 
-    gain.gain.setValueAtTime(vol, time)
+    const finalVol = vol * this.volume
+    gain.gain.setValueAtTime(finalVol, time)
     gain.gain.exponentialRampToValueAtTime(0.001, time + dur)
 
     osc.connect(filter)
@@ -91,6 +97,7 @@ export default function CinematicIntro({ onEnterStudio, reducedMotion, setReduce
   const [bpm, setBpm] = useState(72)
   const [cameraAngle, setCameraAngle] = useState("anterior")
   const [audioEnabled, setAudioEnabled] = useState(false)
+  const [audioVolume, setAudioVolume] = useState(0.5)
   const audioSynthRef = useRef(null)
 
   useEffect(() => {
@@ -107,7 +114,15 @@ export default function CinematicIntro({ onEnterStudio, reducedMotion, setReduce
       setAudioEnabled(false)
     } else {
       audioSynthRef.current.start(bpm)
+      audioSynthRef.current.setVolume(audioVolume)
       setAudioEnabled(true)
+    }
+  }
+
+  const handleVolumeChange = (newVol) => {
+    setAudioVolume(newVol)
+    if (audioSynthRef.current) {
+      audioSynthRef.current.setVolume(newVol)
     }
   }
 
@@ -201,21 +216,60 @@ export default function CinematicIntro({ onEnterStudio, reducedMotion, setReduce
         </div>
 
         <div className="flex items-center space-x-3 sm:space-x-4">
-          {/* Heartbeat Sound Synth Toggle */}
-          <motion.button
-            onClick={toggleAudio}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className={`flex items-center space-x-2 text-[11px] font-mono px-3 py-1.5 rounded-lg border transition cursor-pointer backdrop-blur-sm ${
-              audioEnabled
-                ? "bg-cyan-500/20 border-cyan-400/60 text-cyan-300 shadow-[0_0_15px_rgba(6,182,212,0.3)]"
-                : "bg-white/[0.02] border-white/10 text-slate-400 hover:text-white"
-            }`}
-            title="Toggle Web Audio Heartbeat Sound Synthesizer"
-          >
-            {audioEnabled ? <Volume2 className="w-3.5 h-3.5 text-cyan-400 animate-pulse" /> : <VolumeX className="w-3.5 h-3.5" />}
-            <span className="hidden sm:inline">{audioEnabled ? "Sound: ON" : "Sound: OFF"}</span>
-          </motion.button>
+          {/* Heartbeat Sound Synth & Visualizer HUD */}
+          <div className="flex items-center space-x-2 px-2.5 py-1.5 rounded-lg border border-white/10 bg-white/[0.02] backdrop-blur-sm">
+            <motion.button
+              onClick={toggleAudio}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className={`flex items-center space-x-1.5 text-[11px] font-mono cursor-pointer transition ${
+                audioEnabled ? "text-cyan-300" : "text-slate-400 hover:text-white"
+              }`}
+              title="Toggle Web Audio S1/S2 Heartbeat Synth"
+            >
+              {audioEnabled ? <Volume2 className="w-3.5 h-3.5 text-cyan-400 animate-pulse" /> : <VolumeX className="w-3.5 h-3.5" />}
+              <span>{audioEnabled ? "S1/S2 Sound" : "Muted"}</span>
+            </motion.button>
+
+            {audioEnabled && (
+              <>
+                <div className="flex items-center space-x-1 pl-1 border-l border-white/10">
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.05"
+                    value={audioVolume}
+                    onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
+                    className="w-14 h-1 accent-cyan-400 cursor-pointer"
+                    title={`Volume: ${Math.round(audioVolume * 100)}%`}
+                  />
+                  <span className="text-[10px] font-mono text-cyan-400 w-7 text-right">
+                    {Math.round(audioVolume * 100)}%
+                  </span>
+                </div>
+
+                {/* Animated Audio Equalizer Bars */}
+                <div className="flex items-end space-x-0.5 h-3 px-1">
+                  {[0.4, 0.8, 1.0, 0.6, 0.9].map((h, i) => (
+                    <motion.div
+                      key={i}
+                      className="w-0.5 bg-cyan-400 rounded-full"
+                      animate={{
+                        height: ["2px", `${h * 12}px`, "2px"]
+                      }}
+                      transition={{
+                        duration: 60 / bpm,
+                        repeat: Infinity,
+                        delay: i * 0.08,
+                        ease: "easeInOut"
+                      }}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
 
           {/* Fluid Motion Toggle */}
           <motion.button
