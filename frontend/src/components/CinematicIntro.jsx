@@ -92,10 +92,17 @@ const ANGLES = [
   { id: "lateral", label: "Left Lateral Oblique" }
 ]
 
+const LAYERS = [
+  { id: "solid", label: "Solid Myocardium" },
+  { id: "xray", label: "X-Ray Translucent" },
+  { id: "wireframe", label: "Chamber Wireframe" }
+]
+
 export default function CinematicIntro({ onEnterStudio, reducedMotion, setReducedMotion }) {
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [bpm, setBpm] = useState(72)
   const [cameraAngle, setCameraAngle] = useState("anterior")
+  const [anatomicalLayer, setAnatomicalLayer] = useState("solid")
   const [audioEnabled, setAudioEnabled] = useState(false)
   const [audioVolume, setAudioVolume] = useState(0.5)
   const audioSynthRef = useRef(null)
@@ -152,6 +159,7 @@ export default function CinematicIntro({ onEnterStudio, reducedMotion, setReduce
         reducedMotion={reducedMotion}
         bpm={bpm}
         cameraAngle={cameraAngle}
+        anatomicalLayer={anatomicalLayer}
       />
 
       {/* Atmospheric Vignette */}
@@ -384,6 +392,29 @@ export default function CinematicIntro({ onEnterStudio, reducedMotion, setReduce
                 }`}
               >
                 {a.id.toUpperCase()}
+              </button>
+            ))}
+          </div>
+
+          <div className="hidden sm:block w-px h-4 bg-white/10" />
+
+          {/* Anatomical Dissection Layer Mode */}
+          <div className="flex items-center space-x-1.5">
+            <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest mr-1 flex items-center space-x-1">
+              <Sparkles className="w-3 h-3 text-cyan-400/80" />
+              <span>Layer:</span>
+            </span>
+            {LAYERS.map((lyr) => (
+              <button
+                key={lyr.id}
+                onClick={() => setAnatomicalLayer(lyr.id)}
+                className={`px-2.5 py-1 rounded-full text-[10px] font-mono transition cursor-pointer border ${
+                  anatomicalLayer === lyr.id
+                    ? "bg-cyan-950/80 border-cyan-400 text-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.3)]"
+                    : "bg-white/[0.02] border-white/10 text-slate-400 hover:text-white"
+                }`}
+              >
+                {lyr.id.toUpperCase()}
               </button>
             ))}
           </div>
