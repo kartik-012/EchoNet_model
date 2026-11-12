@@ -492,6 +492,46 @@ function AHA17SegmentPlot() {
   )
 }
 
+/* ====== Acoustic Views Configuration ====== */
+const ACOUSTIC_VIEWS = {
+  A4C: {
+    name: "Apical 4-Chamber",
+    tag: "A4C",
+    badge: "Primary Diagnostic",
+    structures: "LV • RV • LA • RA • Apex",
+    angle: "Apex-Base 0°",
+    depth: "16 cm • TIS 0.6",
+    efContribution: "100% Core Matrix"
+  },
+  A2C: {
+    name: "Apical 2-Chamber",
+    tag: "A2C",
+    badge: "Biplane Orthogonal",
+    structures: "LV Anterior • LV Inferior • Mitral Valve",
+    angle: "60° Counter-Clockwise Sweep",
+    depth: "16 cm • TIS 0.6",
+    efContribution: "Biplane Simpson Orthogonal"
+  },
+  PLAX: {
+    name: "Parasternal Long-Axis",
+    tag: "PLAX",
+    badge: "Longitudinal Axis",
+    structures: "RV • IVS • LV Cavity • Ao Valve • LA",
+    angle: "3rd-4th ICS Right Shoulder",
+    depth: "18 cm • TIS 0.8",
+    efContribution: "Teichholz / Quinones Validation"
+  },
+  PSAX: {
+    name: "Parasternal Short-Axis",
+    tag: "PSAX",
+    badge: "Radial Transverse",
+    structures: "Mid-Papillary Donut • 17-Seg Ring",
+    angle: "90° Orthogonal to PLAX",
+    depth: "14 cm • TIS 0.7",
+    efContribution: "Wall Thickening Radial Assessment"
+  }
+}
+
 /* ====== Main Component ====== */
 export default function IntelligenceReport({
   result,
@@ -505,6 +545,7 @@ export default function IntelligenceReport({
   const [playbackSpeed, setPlaybackSpeed] = useState(70)
   const [gradCamOpacity, setGradCamOpacity] = useState(0.75)
   const [splitCompareMode, setSplitCompareMode] = useState(false)
+  const [selectedAcousticView, setSelectedAcousticView] = useState("A4C")
   const [showSimpsonsDiscs, setShowSimpsonsDiscs] = useState(false)
   const [showColorDoppler, setShowColorDoppler] = useState(false)
   const [caliperActive, setCaliperActive] = useState(false)
@@ -1024,6 +1065,39 @@ export default function IntelligenceReport({
               </div>
             </div>
 
+            {/* Multi-View Acoustic Window Selector */}
+            <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 mx-2 mb-3 rounded-xl bg-slate-950/70 border border-white/5 text-[11px] font-mono">
+              <div className="flex items-center space-x-1.5">
+                <span className="text-[10px] text-slate-500 font-semibold tracking-wider uppercase mr-1">Window:</span>
+                {Object.keys(ACOUSTIC_VIEWS).map((vKey) => {
+                  const v = ACOUSTIC_VIEWS[vKey]
+                  const isActive = selectedAcousticView === vKey
+                  return (
+                    <button
+                      key={vKey}
+                      onClick={() => setSelectedAcousticView(vKey)}
+                      className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer flex items-center space-x-1 ${
+                        isActive
+                          ? "bg-cyan-500/20 text-cyan-300 border border-cyan-400/50 shadow-[0_0_10px_rgba(6,182,212,0.3)] font-bold"
+                          : "bg-white/[0.03] text-slate-400 hover:text-white border border-white/5"
+                      }`}
+                    >
+                      <span>{v.tag}</span>
+                      <span className="text-[9px] opacity-70 hidden sm:inline">({v.badge.split(" ")[0]})</span>
+                    </button>
+                  )
+                })}
+              </div>
+              <div className="flex items-center space-x-3 text-[10px] text-slate-400">
+                <span className="hidden md:inline">
+                  Structures: <strong className="text-cyan-300">{ACOUSTIC_VIEWS[selectedAcousticView].structures}</strong>
+                </span>
+                <span className="px-2 py-0.5 rounded bg-cyan-950/50 text-cyan-400 border border-cyan-500/20">
+                  {ACOUSTIC_VIEWS[selectedAcousticView].angle}
+                </span>
+              </div>
+            </div>
+
             {splitCompareMode ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-2 relative">
                 {/* End-Diastole Card */}
@@ -1079,6 +1153,11 @@ export default function IntelligenceReport({
                   <div className="imaging-cell-header">
                     {cell.icon}
                     <span>{cell.label}</span>
+                    {cell.hasControls && (
+                      <span className="ml-auto text-[9px] font-mono px-1.5 py-0.5 rounded bg-cyan-950/80 text-cyan-300 border border-cyan-500/30">
+                        {selectedAcousticView} • {ACOUSTIC_VIEWS[selectedAcousticView].angle}
+                      </span>
+                    )}
                   </div>
                   <div
                     className={`imaging-cell-viewport ${cell.isHeatmap ? "heatmap-viewport" : ""}`}
