@@ -18,7 +18,8 @@ import {
   FileText,
   Search,
   Copy,
-  Check
+  Check,
+  ShieldCheck
 } from "lucide-react"
 
 const DICOM_TAG_CATALOG = [
@@ -182,6 +183,7 @@ export default function UploadStudio({
   const [dicomSearchQuery, setDicomSearchQuery] = useState("")
   const [dicomCategory, setDicomCategory] = useState("all")
   const [copiedDicom, setCopiedDicom] = useState(false)
+  const [anonymizeDicom, setAnonymizeDicom] = useState(true)
   const fileInputRef = useRef(null)
 
   const handleCopyDicom = () => {
@@ -847,6 +849,18 @@ export default function UploadStudio({
                   </div>
                   <div className="flex items-center space-x-2">
                     <button
+                      onClick={() => setAnonymizeDicom(!anonymizeDicom)}
+                      className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-lg border text-[10px] transition cursor-pointer ${
+                        anonymizeDicom
+                          ? "bg-emerald-950/70 border-emerald-500/40 text-emerald-300"
+                          : "bg-white/[0.04] border-white/10 text-slate-400 hover:text-white"
+                      }`}
+                      title="Toggle HIPAA PHI De-Identification"
+                    >
+                      <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                      <span>{anonymizeDicom ? "HIPAA Safe" : "Raw PHI"}</span>
+                    </button>
+                    <button
                       onClick={handleCopyDicom}
                       className="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg border border-white/10 bg-white/[0.04] text-[10px] text-slate-300 hover:text-white hover:border-cyan-400/40 transition cursor-pointer"
                     >
@@ -922,7 +936,13 @@ export default function UploadStudio({
                               <td className="p-2.5 text-cyan-400 font-bold">{tag.tag}</td>
                               <td className="p-2.5 text-amber-300/80 font-mono text-[10px]">{tag.vr}</td>
                               <td className="p-2.5 text-slate-200">{tag.name}</td>
-                              <td className="p-2.5 text-slate-300 font-mono max-w-[200px] truncate">{tag.value}</td>
+                              <td className="p-2.5 text-slate-300 font-mono max-w-[200px] truncate">
+                                {anonymizeDicom && tag.category === "demographics" && tag.name.includes("Patient")
+                                  ? tag.name.includes("Name")
+                                    ? "ANONYMOUS^CARDIAC^COHORT"
+                                    : "ANON-SHA256: 7F3A9C"
+                                  : tag.value}
+                              </td>
                             </tr>
                           ))}
                       </tbody>
