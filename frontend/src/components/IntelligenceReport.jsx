@@ -585,6 +585,7 @@ export default function IntelligenceReport({
   const [showSimpsonsDiscs, setShowSimpsonsDiscs] = useState(false)
   const [volumeMethod, setVolumeMethod] = useState("simpsons") // "simpsons" | "arealength"
   const [showColorDoppler, setShowColorDoppler] = useState(false)
+  const [showContrastMCE, setShowContrastMCE] = useState(false)
   const [showDiastolicModal, setShowDiastolicModal] = useState(false)
   const [caliperActive, setCaliperActive] = useState(false)
   const [caliperPoints, setCaliperPoints] = useState([])
@@ -1292,6 +1293,13 @@ export default function IntelligenceReport({
                           >
                             Doppler
                           </button>
+                          <button
+                            className={`img-ctrl-btn text-[9px] font-mono px-1.5 transition ${showContrastMCE ? "text-emerald-300 bg-emerald-950/90 border border-emerald-400/50 shadow-[0_0_8px_rgba(52,211,153,0.4)]" : "text-slate-400"}`}
+                            onClick={() => setShowContrastMCE(!showContrastMCE)}
+                            title="Toggle Myocardial Contrast Echocardiography (MCE) Microbubble Opacification"
+                          >
+                            Contrast
+                          </button>
                         </div>
                         <div className="imaging-frame-count">{currentFrame + 1} / 32</div>
                         <button className="imaging-expand"><Maximize2 size={10} /></button>
@@ -1419,6 +1427,33 @@ export default function IntelligenceReport({
                           {currentFrame <= 5 || currentFrame >= 23
                             ? "COLOR DOPPLER: Transmitral Diastolic Inflow (+52 cm/s)"
                             : "COLOR DOPPLER: Aortic Systolic Outflow (-48 cm/s)"}
+                        </div>
+                      </div>
+                    )}
+                    {cell.hasControls && showContrastMCE && (
+                      <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
+                        <svg className="w-full h-full" viewBox="0 0 200 200">
+                          {/* Opacification Glow Fill */}
+                          <ellipse cx="100" cy="115" rx="36" ry="58" fill="rgba(255,255,255,0.22)" filter="blur(4px)" />
+                          {/* Microbubble swarm */}
+                          {Array.from({ length: 24 }).map((_, bi) => {
+                            const angle = (bi / 24) * Math.PI * 2
+                            const radX = Math.cos(angle) * (12 + (bi % 5) * 4)
+                            const radY = Math.sin(angle) * (20 + (bi % 6) * 6)
+                            return (
+                              <circle
+                                key={bi}
+                                cx={100 + radX}
+                                cy={115 + radY}
+                                r={1.2 + (bi % 3) * 0.5}
+                                fill="#ffffff"
+                                opacity={0.65 + ((bi + currentFrame) % 5) * 0.07}
+                              />
+                            )
+                          })}
+                        </svg>
+                        <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/85 text-[9px] font-mono text-emerald-300 border border-emerald-500/40">
+                          MCE CONTRAST: SonoVue Microbubbles (MI 0.12 • +18.2 dB Opacification)
                         </div>
                       </div>
                     )}
