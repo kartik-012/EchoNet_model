@@ -87,9 +87,11 @@ const RHYTHMS = [
 ]
 
 const ANGLES = [
-  { id: "anterior", label: "Anterior Sternocostal" },
-  { id: "apical", label: "Apical 4-Chamber (A4C)" },
-  { id: "lateral", label: "Left Lateral Oblique" }
+  { id: "anterior", label: "Anterior Sternocostal", tag: "ANT" },
+  { id: "apical", label: "Apical 4-Chamber (A4C)", tag: "A4C" },
+  { id: "lateral", label: "Left Lateral Oblique", tag: "LAT" },
+  { id: "parasternal", label: "Parasternal Long-Axis", tag: "PLAX" },
+  { id: "posterior", label: "Posterior Base", tag: "POST" }
 ]
 
 const LAYERS = [
@@ -385,13 +387,14 @@ export default function CinematicIntro({ onEnterStudio, reducedMotion, setReduce
               <button
                 key={a.id}
                 onClick={() => setCameraAngle(a.id)}
+                title={a.label}
                 className={`px-2.5 py-1 rounded-full text-[10px] font-mono transition cursor-pointer border ${
                   cameraAngle === a.id
                     ? "bg-cyan-950/80 border-cyan-400 text-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.3)]"
                     : "bg-white/[0.02] border-white/10 text-slate-400 hover:text-white"
                 }`}
               >
-                {a.id.toUpperCase()}
+                {a.tag || a.id.toUpperCase()}
               </button>
             ))}
           </div>

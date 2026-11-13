@@ -1753,7 +1753,9 @@ export default function ThreeHeartCanvas({ isTransitioning, onTransitionComplete
       const anglePresets = {
         anterior: { x: 0, y: 0, z: 8.5 },
         apical: { x: 0.9, y: -2.3, z: 7.7 },
-        lateral: { x: -3.2, y: 0.5, z: 7.3 }
+        lateral: { x: -3.2, y: 0.5, z: 7.3 },
+        parasternal: { x: 2.8, y: 1.2, z: 7.2 },
+        posterior: { x: 0.1, y: 0.8, z: -8.2 }
       }
       const preset = anglePresets[cameraAngleRef.current] || anglePresets.anterior
       if (!isTransitioningRef.current) {
