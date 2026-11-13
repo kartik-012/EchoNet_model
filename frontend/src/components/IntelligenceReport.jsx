@@ -586,6 +586,7 @@ export default function IntelligenceReport({
   const [volumeMethod, setVolumeMethod] = useState("simpsons") // "simpsons" | "arealength"
   const [showColorDoppler, setShowColorDoppler] = useState(false)
   const [showContrastMCE, setShowContrastMCE] = useState(false)
+  const [showMMode, setShowMMode] = useState(false)
   const [showDiastolicModal, setShowDiastolicModal] = useState(false)
   const [caliperActive, setCaliperActive] = useState(false)
   const [caliperPoints, setCaliperPoints] = useState([])
@@ -1300,6 +1301,13 @@ export default function IntelligenceReport({
                           >
                             Contrast
                           </button>
+                          <button
+                            className={`img-ctrl-btn text-[9px] font-mono px-1.5 transition ${showMMode ? "text-cyan-300 bg-cyan-950/90 border border-cyan-400/50 shadow-[0_0_8px_rgba(6,182,212,0.4)]" : "text-slate-400"}`}
+                            onClick={() => setShowMMode(!showMMode)}
+                            title="Toggle Motion-Mode (M-Mode) EPSS Sweep Visualizer"
+                          >
+                            M-Mode
+                          </button>
                         </div>
                         <div className="imaging-frame-count">{currentFrame + 1} / 32</div>
                         <button className="imaging-expand"><Maximize2 size={10} /></button>
@@ -1454,6 +1462,43 @@ export default function IntelligenceReport({
                         </svg>
                         <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/85 text-[9px] font-mono text-emerald-300 border border-emerald-500/40">
                           MCE CONTRAST: SonoVue Microbubbles (MI 0.12 • +18.2 dB Opacification)
+                        </div>
+                      </div>
+                    )}
+                    {cell.hasControls && showMMode && (
+                      <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden flex flex-col justify-between">
+                        {/* M-Mode Ice-Pick Sample Line */}
+                        <svg className="w-full h-full absolute inset-0" viewBox="0 0 200 200">
+                          <line x1="100" y1="20" x2="100" y2="180" stroke="#f59e0b" strokeWidth="1.2" strokeDasharray="3,2" />
+                          <circle cx="100" cy="115" r="3" fill="#f59e0b" />
+                          <text x="106" y="118" fill="#fef08a" fontSize="7" fontFamily="monospace">EPSS Sampling</text>
+                        </svg>
+
+                        {/* M-Mode Time-Motion Synthetic Sweep Strip */}
+                        <div className="mt-auto w-full h-20 bg-black/90 border-t border-cyan-500/30 p-1.5 flex flex-col justify-between">
+                          <div className="flex items-center justify-between text-[8px] font-mono">
+                            <span className="text-amber-400 font-bold">M-MODE TIME-MOTION SWEEP</span>
+                            <span className="text-cyan-300">EPSS: 4.8 mm (Normal &lt; 7mm)</span>
+                            <span className="text-emerald-400">Teichholz EF: 55.4%</span>
+                          </div>
+                          <svg className="w-full h-11" viewBox="0 0 300 45">
+                            {/* IVS (Septum) motion */}
+                            <path d="M 0,10 Q 35,6 75,10 T 150,10 T 225,10 T 300,10" fill="none" stroke="#67e8f9" strokeWidth="1.2" opacity="0.8" />
+                            {/* Anterior Mitral Leaflet (E-F-A wave motion) */}
+                            <path
+                              d="M 0,26 C 20,26 30,12 40,12 C 50,12 55,22 65,22 C 72,22 78,16 85,16 C 95,16 105,26 115,26 C 135,26 145,12 155,12 C 165,12 170,22 180,22 C 187,22 193,16 200,16 C 210,16 220,26 230,26 L 300,26"
+                              fill="none"
+                              stroke="#facc15"
+                              strokeWidth="1.4"
+                            />
+                            {/* Posterior Wall motion */}
+                            <path d="M 0,38 Q 35,42 75,38 T 150,38 T 225,38 T 300,38" fill="none" stroke="#67e8f9" strokeWidth="1.2" opacity="0.7" />
+                            {/* E-point and A-point callouts */}
+                            <text x="36" y="10" fill="#fef08a" fontSize="6" fontFamily="monospace">E</text>
+                            <text x="82" y="14" fill="#fef08a" fontSize="6" fontFamily="monospace">A</text>
+                            {/* EPSS caliper line */}
+                            <line x1="40" y1="10" x2="40" y2="12" stroke="#22c55e" strokeWidth="1.5" />
+                          </svg>
                         </div>
                       </div>
                     )}
