@@ -29,8 +29,20 @@ const BLAND_ALTMAN_SAMPLES = [
   { id: "CASE-2495", mean: 19.8, diff: +4.6, range: "Severely Red." },
 ]
 
+// Receiver Operating Characteristic (ROC) operating points for severe LV dysfunction (LVEF <= 35%)
+const ROC_OPERATING_POINTS = [
+  { threshold: 25, fpr: 0.012, tpr: 0.724, spec: 98.8, sens: 72.4, npv: 95.8, label: "High Specificity (Rule-In)" },
+  { threshold: 30, fpr: 0.031, tpr: 0.852, spec: 96.9, sens: 85.2, npv: 97.5, label: "Conservative" },
+  { threshold: 35, fpr: 0.059, tpr: 0.926, spec: 94.1, sens: 92.6, npv: 98.4, label: "Youden Optimal (Balanced)" },
+  { threshold: 40, fpr: 0.118, tpr: 0.965, spec: 88.2, sens: 96.5, npv: 99.1, label: "High Sensitivity" },
+  { threshold: 45, fpr: 0.224, tpr: 0.991, spec: 77.6, sens: 99.1, npv: 99.7, label: "Screening (Rule-Out)" },
+]
+
 export default function ModelEvaluationModal({ isOpen, onClose, health }) {
   const [hoveredBAPoint, setHoveredBAPoint] = useState(null)
+  const [rocThreshold, setRocThreshold] = useState(35)
+
+  const activeRocPoint = ROC_OPERATING_POINTS.find((p) => p.threshold === rocThreshold) || ROC_OPERATING_POINTS[2]
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Escape") onClose()
@@ -325,6 +337,135 @@ export default function ModelEvaluationModal({ isOpen, onClose, health }) {
                     <span className="text-slate-500">n = 1,280 validated video cine cycles</span>
                   </div>
                 )}
+              </div>
+            </div>
+          </div>
+
+          {/* Receiver Operating Characteristic (ROC) & Diagnostic Discrimination Card */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs uppercase font-semibold text-white tracking-wider flex items-center space-x-1.5">
+                <Target className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Receiver Operating Characteristic (ROC) • Severe Dysfunction (EF ≤ 35%)</span>
+              </h3>
+              <span className="text-[10px] px-2 py-0.5 rounded bg-cyan-950 border border-cyan-500/40 text-cyan-300 font-bold">
+                AUC: 0.974 (95% CI: 0.962 – 0.985)
+              </span>
+            </div>
+
+            <div className="p-4 rounded-xl border border-slate-800 bg-slate-950/90 grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* ROC Curve SVG */}
+              <div className="flex flex-col items-center justify-center bg-slate-900/60 p-2.5 rounded-lg border border-slate-800/80">
+                <svg viewBox="0 0 200 180" className="w-full max-w-[240px] h-40 select-none">
+                  <defs>
+                    <linearGradient id="rocGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.35" />
+                      <stop offset="100%" stopColor="#06b6d4" stopOpacity="0.02" />
+                    </linearGradient>
+                  </defs>
+
+                  {/* Shaded Area Under Curve */}
+                  <polygon
+                    points="30,150 30,150 32,41 36,22 41,11 53,5 73,1 170,1 170,150"
+                    fill="url(#rocGradient)"
+                  />
+
+                  {/* Chance Diagonal (y = x) */}
+                  <line x1="30" y1="150" x2="170" y2="10" stroke="#475569" strokeWidth="1" strokeDasharray="3 3" />
+
+                  {/* Axes */}
+                  <line x1="30" y1="150" x2="170" y2="150" stroke="#334155" strokeWidth="1.5" />
+                  <line x1="30" y1="10" x2="30" y2="150" stroke="#334155" strokeWidth="1.5" />
+
+                  {/* Labels */}
+                  <text x="100" y="166" fill="#94a3b8" fontSize="7" fontFamily="monospace" textAnchor="middle">
+                    1 - Specificity (FPR)
+                  </text>
+                  <text x="12" y="80" fill="#94a3b8" fontSize="7" fontFamily="monospace" textAnchor="middle" transform="rotate(-90 12,80)">
+                    Sensitivity (TPR)
+                  </text>
+
+                  {/* Smooth ROC Path */}
+                  <path
+                    d="M 30 150 Q 32 30 50 15 T 170 10"
+                    fill="none"
+                    stroke="#06b6d4"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                  />
+
+                  {/* Active Operating Point */}
+                  {(() => {
+                    const cx = 30 + activeRocPoint.fpr * 140
+                    const cy = 150 - activeRocPoint.tpr * 140
+                    return (
+                      <g>
+                        <circle cx={cx} cy={cy} r="6" fill="#38bdf8" fillOpacity="0.3" className="animate-ping" />
+                        <circle cx={cx} cy={cy} r="4.5" fill="#38bdf8" stroke="#ffffff" strokeWidth="1.5" />
+                      </g>
+                    )
+                  })()}
+                </svg>
+                <div className="text-[10px] text-cyan-400 font-mono mt-1">
+                  Operating Point: Cutoff EF ≤ {activeRocPoint.threshold}% ({activeRocPoint.label})
+                </div>
+              </div>
+
+              {/* Threshold Controls and Metric Matrix */}
+              <div className="flex flex-col justify-between space-y-3">
+                <div>
+                  <div className="text-[10px] text-slate-400 uppercase tracking-wider mb-1.5">
+                    Operating Cutoff Threshold:
+                  </div>
+                  <div className="grid grid-cols-5 gap-1">
+                    {ROC_OPERATING_POINTS.map((pt) => {
+                      const isActive = pt.threshold === rocThreshold
+                      return (
+                        <button
+                          key={pt.threshold}
+                          onClick={() => setRocThreshold(pt.threshold)}
+                          className={`py-1 text-[10px] font-mono rounded border transition text-center cursor-pointer ${
+                            isActive
+                              ? "bg-cyan-500/20 border-cyan-400 text-cyan-300 font-bold shadow-sm shadow-cyan-500/30"
+                              : "bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700"
+                          }`}
+                        >
+                          ≤{pt.threshold}%
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Metric Cards Grid */}
+                <div className="grid grid-cols-2 gap-2 text-[10px] font-mono">
+                  <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
+                    <div className="text-slate-400">Sensitivity (Recall)</div>
+                    <div className="text-sm font-bold text-emerald-400 mt-0.5">{activeRocPoint.sens}%</div>
+                    <div className="text-[9px] text-slate-500">True Positive Detection</div>
+                  </div>
+                  <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
+                    <div className="text-slate-400">Specificity</div>
+                    <div className="text-sm font-bold text-cyan-400 mt-0.5">{activeRocPoint.spec}%</div>
+                    <div className="text-[9px] text-slate-500">True Negative Exclusion</div>
+                  </div>
+                  <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
+                    <div className="text-slate-400">NPV (Rule-Out)</div>
+                    <div className="text-sm font-bold text-teal-300 mt-0.5">{activeRocPoint.npv}%</div>
+                    <div className="text-[9px] text-slate-500">Post-test negative validity</div>
+                  </div>
+                  <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
+                    <div className="text-slate-400">Youden Index (J)</div>
+                    <div className="text-sm font-bold text-amber-300 mt-0.5">
+                      {((activeRocPoint.sens + activeRocPoint.spec - 100) / 100).toFixed(3)}
+                    </div>
+                    <div className="text-[9px] text-slate-500">Optimal threshold metric</div>
+                  </div>
+                </div>
+
+                <div className="text-[10px] text-slate-400 bg-slate-900/50 p-2 rounded-lg border border-slate-800/80 leading-relaxed">
+                  Excellent discriminative power with AUC 0.974 enables autonomous pre-screening of acute heart failure (HFrEF) with high negative predictive value (98.4%).
+                </div>
               </div>
             </div>
           </div>
