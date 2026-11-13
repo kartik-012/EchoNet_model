@@ -597,7 +597,9 @@ export default function IntelligenceReport({
   const [hybridWeightNN, setHybridWeightNN] = useState(0.70)
   const playTimerRef = useRef(null)
   const [activeNav, setActiveNav] = useState("Analysis")
-  const [reportTab, setReportTab] = useState("doctor")
+  const [reportTab, setReportTab] = useState("doctor-report")
+  const [nyhaClass, setNyhaClass] = useState("I")
+  const [patientSbp, setPatientSbp] = useState(120)
   const [copilotInput, setCopilotInput] = useState("")
   const [isLoaded, setIsLoaded] = useState(false)
   const [copilotMessages, setCopilotMessages] = useState([
@@ -2114,15 +2116,18 @@ export default function IntelligenceReport({
                 <h3 className="panel-title">Clinical Intelligence Report</h3>
               </div>
               <div className="report-tabs">
-                {["Doctor Report", "Patient Summary", "AI Copilot"].map((tab) => (
-                  <button
-                    key={tab}
-                    className={`report-tab-btn ${reportTab === tab.toLowerCase().replace(/\s/g, "-") ? "active" : ""}`}
-                    onClick={() => setReportTab(tab.toLowerCase().replace(/\s/g, "-"))}
-                  >
-                    {tab}
-                  </button>
-                ))}
+                {["Doctor Report", "Patient Summary", "Risk Calculator"].map((tab) => {
+                  const key = tab.toLowerCase().replace(/\s/g, "-")
+                  return (
+                    <button
+                      key={tab}
+                      className={`report-tab-btn ${reportTab === key ? "active" : ""}`}
+                      onClick={() => setReportTab(key)}
+                    >
+                      {tab}
+                    </button>
+                  )
+                })}
               </div>
               <div className="report-actions">
                 <motion.button className="report-action-btn" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
@@ -2162,39 +2167,87 @@ export default function IntelligenceReport({
                 <div>Patient: CH. Model: EchoCard-AI v2.0</div>
               </div>
 
-              <div className="report-content-grid">
-                <div className="report-section">
-                  <h4 className="report-section-title">Quantitative Findings</h4>
-                  <div className="report-finding-row">
-                    <span>LVEF (Simpson):</span>
-                    <span className="report-finding-val">{ef}% ± 1.1%</span>
-                    <motion.span
-                      className="report-finding-badge green"
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ delay: 1.5, type: "spring" }}
-                    >
-                      ✓ Preserved Function
-                    </motion.span>
+              {reportTab === "risk-calculator" ? (
+                <div className="space-y-3 font-mono text-xs">
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-black/50 border border-white/5">
+                    <div>
+                      <div className="text-white font-bold">MAGGIC Heart Failure Mortality Risk Index</div>
+                      <div className="text-[10px] text-slate-400 mt-0.5">Meta-Analysis Global Group in Chronic Heart Failure (39,372 patient cohort)</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-emerald-400 font-bold text-sm">Low Risk</div>
+                      <div className="text-[10px] text-slate-500">Score: {ef < 40 ? 14 : 9}</div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <div className="p-2 rounded-lg bg-black/40 border border-white/5 text-center">
+                      <div className="text-[9px] text-slate-500 uppercase">1-Yr Mortality</div>
+                      <div className="text-emerald-400 font-bold text-base mt-0.5">{ef < 40 ? "5.8%" : "2.1%"}</div>
+                    </div>
+                    <div className="p-2 rounded-lg bg-black/40 border border-white/5 text-center">
+                      <div className="text-[9px] text-slate-500 uppercase">3-Yr Mortality</div>
+                      <div className="text-cyan-300 font-bold text-base mt-0.5">{ef < 40 ? "14.2%" : "5.4%"}</div>
+                    </div>
+                    <div className="p-2 rounded-lg bg-black/40 border border-white/5 text-center">
+                      <div className="text-[9px] text-slate-500 uppercase">Framingham 4-Yr</div>
+                      <div className="text-emerald-400 font-bold text-base mt-0.5">&lt;3.2%</div>
+                    </div>
+                    <div className="p-2 rounded-lg bg-black/40 border border-white/5 text-center">
+                      <div className="text-[9px] text-slate-500 uppercase">NYHA Class</div>
+                      <div className="flex items-center justify-center space-x-1 mt-0.5">
+                        {["I", "II", "III", "IV"].map((c) => (
+                          <button
+                            key={c}
+                            onClick={() => setNyhaClass(c)}
+                            className={`px-1 rounded text-[9px] transition ${nyhaClass === c ? "bg-cyan-500/30 text-cyan-300 font-bold" : "text-slate-500 hover:text-white"}`}
+                          >
+                            {c}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-lg bg-cyan-950/30 border border-cyan-500/20 text-[10px] text-cyan-200/90 leading-relaxed">
+                    AHA/ACC 2022 Guidelines: Preserved LVEF ({ef}%) with low MAGGIC risk profile indicates normal functional reserve. Standard preventative lifestyle and blood pressure optimization recommended.
                   </div>
                 </div>
-
-                <div className="report-section">
-                  <h4 className="report-section-title">Key Observations</h4>
-                  <ul className="report-observations">
-                    {["Normal LV function", "No significant regional wall motion abnormality", "Good image quality"].map((obs, i) => (
-                      <motion.li
-                        key={i}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 1.4 + i * 0.1 }}
+              ) : (
+                <div className="report-content-grid">
+                  <div className="report-section">
+                    <h4 className="report-section-title">Quantitative Findings</h4>
+                    <div className="report-finding-row">
+                      <span>LVEF (Simpson):</span>
+                      <span className="report-finding-val">{ef}% ± 1.1%</span>
+                      <motion.span
+                        className="report-finding-badge green"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ delay: 1.5, type: "spring" }}
                       >
-                        {obs}
-                      </motion.li>
-                    ))}
-                  </ul>
+                        ✓ Preserved Function
+                      </motion.span>
+                    </div>
+                  </div>
+
+                  <div className="report-section">
+                    <h4 className="report-section-title">Key Observations</h4>
+                    <ul className="report-observations">
+                      {["Normal LV function", "No significant regional wall motion abnormality", "Good image quality"].map((obs, i) => (
+                        <motion.li
+                          key={i}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 1.4 + i * 0.1 }}
+                        >
+                          {obs}
+                        </motion.li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
-              </div>
+              )}
             </motion.div>
           </Panel3D>
 
