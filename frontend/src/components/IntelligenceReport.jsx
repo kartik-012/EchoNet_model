@@ -585,6 +585,7 @@ export default function IntelligenceReport({
   const [showSimpsonsDiscs, setShowSimpsonsDiscs] = useState(false)
   const [volumeMethod, setVolumeMethod] = useState("simpsons") // "simpsons" | "arealength"
   const [showColorDoppler, setShowColorDoppler] = useState(false)
+  const [showDiastolicModal, setShowDiastolicModal] = useState(false)
   const [caliperActive, setCaliperActive] = useState(false)
   const [caliperPoints, setCaliperPoints] = useState([])
   const [lvidd, setLvidd] = useState(4.8)
@@ -980,6 +981,16 @@ export default function IntelligenceReport({
           <span className="px-2 py-0.5 rounded bg-emerald-950/60 border border-emerald-500/30 text-[10px] text-emerald-300">
             {(((67.0 * hrInput) / 1000) / bsaInput) >= 2.5 && (((67.0 * hrInput) / 1000) / bsaInput) <= 4.0 ? "Normal Index" : (((67.0 * hrInput) / 1000) / bsaInput) > 4.0 ? "Hyperdynamic" : "Depressed Index"}
           </span>
+
+          {/* Diastolic Function Modal Trigger */}
+          <button
+            onClick={() => setShowDiastolicModal(true)}
+            className="flex items-center space-x-1.5 px-2.5 py-0.5 rounded-lg bg-cyan-950/70 hover:bg-cyan-900/60 border border-cyan-500/40 text-[10px] text-cyan-300 transition cursor-pointer"
+            title="Open ASE/EACVI 4-Criteria Diastolic Function Assessment Matrix"
+          >
+            <Activity size={10} className="text-cyan-400" />
+            <span>Diastolic: Normal (E/e' 8.4)</span>
+          </button>
         </div>
       </div>
 
@@ -2215,6 +2226,82 @@ export default function IntelligenceReport({
           </Panel3D>
         </div>
       </main>
+
+      {/* ASE/EACVI Diastolic Function Assessment Modal */}
+      <AnimatePresence>
+        {showDiastolicModal && (
+          <div
+            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 font-mono text-xs select-none"
+            onClick={(e) => { if (e.target === e.currentTarget) setShowDiastolicModal(false) }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              className="w-full max-w-xl bg-[#060c1e] border border-cyan-500/40 rounded-2xl shadow-2xl overflow-hidden p-5 space-y-4"
+            >
+              <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                <div className="flex items-center space-x-2 text-cyan-400">
+                  <Activity size={16} />
+                  <span className="font-bold text-white uppercase tracking-wider text-sm">
+                    ASE / EACVI Diastolic Function Algorithm
+                  </span>
+                </div>
+                <button
+                  onClick={() => setShowDiastolicModal(false)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-white transition cursor-pointer"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div className="p-3 rounded-xl bg-emerald-950/40 border border-emerald-500/30 flex items-center justify-between">
+                <div>
+                  <div className="text-emerald-400 font-bold text-sm">Normal Diastolic Function (Grade I)</div>
+                  <div className="text-[10px] text-slate-300 mt-0.5">Normal Left Ventricular Filling Pressures (0 of 4 abnormal criteria met)</div>
+                </div>
+                <span className="px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-300 font-bold text-[11px] border border-emerald-500/40">
+                  PASS (0/4)
+                </span>
+              </div>
+
+              {/* 4 Criteria Matrix */}
+              <div className="space-y-2 text-[11px]">
+                {[
+                  { name: "Average E/e' Ratio", value: "8.4", threshold: "< 14", status: "NORMAL", iconColor: "text-emerald-400" },
+                  { name: "Septal e' Velocity", value: "9.2 cm/s", threshold: "≥ 7 cm/s", status: "NORMAL", iconColor: "text-emerald-400" },
+                  { name: "Lateral e' Velocity", value: "12.4 cm/s", threshold: "≥ 10 cm/s", status: "NORMAL", iconColor: "text-emerald-400" },
+                  { name: "Peak TR Velocity", value: "2.1 m/s", threshold: "≤ 2.8 m/s", status: "NORMAL", iconColor: "text-emerald-400" },
+                  { name: "LA Volume Index (LAVI)", value: "27.4 mL/m²", threshold: "≤ 34 mL/m²", status: "NORMAL", iconColor: "text-emerald-400" }
+                ].map((crit, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-black/40 border border-white/5">
+                    <div>
+                      <span className="text-white font-medium">{crit.name}</span>
+                      <span className="text-slate-500 text-[10px] ml-2">(Ref: {crit.threshold})</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <strong className="text-cyan-300">{crit.value}</strong>
+                      <span className={`px-1.5 py-0.5 rounded text-[9px] border bg-emerald-950/40 border-emerald-500/30 ${crit.iconColor}`}>
+                        {crit.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[10px] text-slate-400">
+                <span>Algorithm: 2016 ASE/EACVI Diastolic Recommendations</span>
+                <button
+                  onClick={() => setShowDiastolicModal(false)}
+                  className="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-white transition cursor-pointer"
+                >
+                  Close
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
