@@ -188,6 +188,50 @@ function SpectralDopplerWaveform({ currentStage }) {
   )
 }
 
+/* ====== 3D ResNet-18 Neural Layer Activation Flow ====== */
+function NeuralLayerActivationFlow({ currentStage }) {
+  const LAYERS_INFO = [
+    { name: "Stem", shape: "32×112²", channels: 64, kernel: "Conv3D 7³", latency: "8ms" },
+    { name: "Layer 1", shape: "16×56²", channels: 64, kernel: "ResBlock×2", latency: "14ms" },
+    { name: "Layer 2", shape: "8×28²", channels: 128, kernel: "ResBlock×2", latency: "22ms" },
+    { name: "Layer 3", shape: "4×14²", channels: 256, kernel: "ResBlock×2", latency: "36ms" },
+    { name: "Layer 4", shape: "2×7²", channels: 512, kernel: "Grad-CAM", latency: "48ms" }
+  ]
+
+  return (
+    <div className="w-full max-w-md p-2.5 rounded-2xl bg-black/50 border border-white/5 mb-4 text-[10px] font-mono">
+      <div className="flex items-center justify-between text-slate-400 mb-2">
+        <span className="flex items-center space-x-1 text-cyan-300">
+          <Cpu className="w-3 h-3 text-cyan-400" />
+          <span className="font-semibold">3D ResNet-18 Spatiotemporal Tensor Flow</span>
+        </span>
+        <span className="text-[9px] text-emerald-400">FP16 CUDA Active</span>
+      </div>
+
+      <div className="grid grid-cols-5 gap-1.5">
+        {LAYERS_INFO.map((layer, idx) => {
+          const isFired = currentStage >= idx + 2
+          return (
+            <motion.div
+              key={layer.name}
+              className={`p-1.5 rounded-lg border text-center transition-all ${
+                isFired
+                  ? "bg-cyan-950/60 border-cyan-400/50 text-cyan-200 shadow-[0_0_10px_rgba(6,182,212,0.2)]"
+                  : "bg-white/[0.02] border-white/5 text-slate-500"
+              }`}
+              animate={isFired ? { scale: [0.97, 1.02, 1] } : {}}
+            >
+              <div className="font-bold text-[9px] truncate">{layer.name}</div>
+              <div className="text-[8px] text-cyan-400/80 font-mono mt-0.5">{layer.shape}</div>
+              <div className="text-[7px] text-slate-500 mt-0.5">{layer.latency}</div>
+            </motion.div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 /* ====== Data Stream Particles ====== */
 function DataStreamParticles() {
   const particles = useRef(
@@ -436,6 +480,9 @@ export default function ProcessingEnvironment({
 
               {/* Pulsed-Wave Spectral Doppler Inflow Envelope */}
               <SpectralDopplerWaveform currentStage={currentStage} />
+
+              {/* 3D ResNet-18 Neural Layer Activation Flow */}
+              <NeuralLayerActivationFlow currentStage={currentStage} />
 
               {/* Title */}
               <motion.h2
