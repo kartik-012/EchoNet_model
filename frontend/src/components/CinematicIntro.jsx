@@ -100,11 +100,19 @@ const LAYERS = [
   { id: "wireframe", label: "Chamber Wireframe" }
 ]
 
+const PHASES = [
+  { id: "dynamic", label: "Full Dynamic Cycle", tag: "ALL" },
+  { id: "ed", label: "End-Diastole (Maximal Filling)", tag: "ED" },
+  { id: "es", label: "End-Systole (Peak Contraction)", tag: "ES" },
+  { id: "early_dia", label: "Early Diastolic Inflow", tag: "E-DIA" }
+]
+
 export default function CinematicIntro({ onEnterStudio, reducedMotion, setReducedMotion }) {
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [bpm, setBpm] = useState(72)
   const [cameraAngle, setCameraAngle] = useState("anterior")
   const [anatomicalLayer, setAnatomicalLayer] = useState("solid")
+  const [cardiacPhase, setCardiacPhase] = useState("dynamic")
   const [audioEnabled, setAudioEnabled] = useState(false)
   const [audioVolume, setAudioVolume] = useState(0.5)
   const audioSynthRef = useRef(null)
@@ -162,6 +170,7 @@ export default function CinematicIntro({ onEnterStudio, reducedMotion, setReduce
         bpm={bpm}
         cameraAngle={cameraAngle}
         anatomicalLayer={anatomicalLayer}
+        cardiacPhase={cardiacPhase}
       />
 
       {/* Atmospheric Vignette */}
@@ -418,6 +427,30 @@ export default function CinematicIntro({ onEnterStudio, reducedMotion, setReduce
                 }`}
               >
                 {lyr.id.toUpperCase()}
+              </button>
+            ))}
+          </div>
+
+          <div className="hidden sm:block w-px h-4 bg-white/10" />
+
+          {/* Cardiac Cycle Phase Mode */}
+          <div className="flex items-center space-x-1.5">
+            <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest mr-1 flex items-center space-x-1">
+              <Activity className="w-3 h-3 text-cyan-400/80" />
+              <span>Phase:</span>
+            </span>
+            {PHASES.map((p) => (
+              <button
+                key={p.id}
+                onClick={() => setCardiacPhase(p.id)}
+                title={p.label}
+                className={`px-2.5 py-1 rounded-full text-[10px] font-mono transition cursor-pointer border ${
+                  cardiacPhase === p.id
+                    ? "bg-cyan-950/80 border-cyan-400 text-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.3)] font-bold"
+                    : "bg-white/[0.02] border-white/10 text-slate-400 hover:text-white"
+                }`}
+              >
+                {p.tag}
               </button>
             ))}
           </div>

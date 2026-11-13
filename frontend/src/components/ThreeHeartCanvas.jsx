@@ -46,7 +46,7 @@ import * as THREE from "three"
 
 
 
-export default function ThreeHeartCanvas({ isTransitioning, onTransitionComplete, reducedMotion, bpm = 72, cameraAngle = "anterior", anatomicalLayer = "solid" }) {
+export default function ThreeHeartCanvas({ isTransitioning, onTransitionComplete, reducedMotion, bpm = 72, cameraAngle = "anterior", anatomicalLayer = "solid", cardiacPhase = "dynamic" }) {
 
 
 
@@ -65,6 +65,7 @@ export default function ThreeHeartCanvas({ isTransitioning, onTransitionComplete
   const cameraAngleRef = useRef(cameraAngle)
 
   const anatomicalLayerRef = useRef(anatomicalLayer)
+  const cardiacPhaseRef = useRef(cardiacPhase)
 
 
 
@@ -98,7 +99,8 @@ export default function ThreeHeartCanvas({ isTransitioning, onTransitionComplete
 
 
 
-  }, [isTransitioning, reducedMotion, bpm, cameraAngle, anatomicalLayer])
+    cardiacPhaseRef.current = cardiacPhase
+  }, [isTransitioning, reducedMotion, bpm, cameraAngle, anatomicalLayer, cardiacPhase])
 
 
 
@@ -1634,34 +1636,17 @@ export default function ThreeHeartCanvas({ isTransitioning, onTransitionComplete
 
 
 
-      } else if (cycle >= 1.4 && cycle < 3.2) {
-
-
-
-        // Ventricular systole (rapid, powerful contraction + twisting)
-
-
-
-        const vCycle = (cycle - 1.4) / 1.8
-
-
-
-        contraction = Math.sin(vCycle * Math.PI) * 0.16
-
-
-
-      } else {
-
-
-
-        // Diastolic relaxation and filling
-
-
-
+      } else if (cardiacPhaseRef.current === "ed") {
         contraction = 0
-
-
-
+      } else if (cardiacPhaseRef.current === "es") {
+        contraction = 0.16
+      } else if (cardiacPhaseRef.current === "early_dia") {
+        contraction = 0.05
+      } else if (cycle >= 1.4 && cycle < 3.2) {
+        const vCycle = (cycle - 1.4) / 1.8
+        contraction = Math.sin(vCycle * Math.PI) * 0.16
+      } else {
+        contraction = 0
       }
 
 
