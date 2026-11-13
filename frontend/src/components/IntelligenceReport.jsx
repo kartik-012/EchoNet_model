@@ -339,11 +339,19 @@ function Panel3D({ children, className = "", delay = 0, tiltIntensity = 6 }) {
 /* ====== AHA 17-Segment Bullseye Polar Plot Component ====== */
 function AHA17SegmentPlot() {
   const [activeSeg, setActiveSeg] = useState(null)
+  const [displayMode, setDisplayMode] = useState("wmsi") // "wmsi" | "gls"
   const [segScores, setSegScores] = useState({
     1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1,
     7: 1, 8: 1, 9: 1, 10: 1, 11: 1, 12: 1,
     13: 1, 14: 1, 15: 1, 16: 1, 17: 1
   })
+
+  const getStrainColor = (strain) => {
+    if (strain <= -20) return "rgba(225, 29, 72, 0.85)" // deep rose red
+    if (strain <= -16) return "rgba(244, 63, 94, 0.75)" // medium rose
+    if (strain <= -12) return "rgba(251, 146, 60, 0.75)" // orange (mild)
+    return "rgba(56, 189, 248, 0.75)" // blue/cyan (impaired)
+  }
 
   const SCORE_CONFIG = {
     1: { label: "Normal", color: "rgba(6,182,212,0.65)", hex: "#22d3ee", textClass: "text-cyan-400" },
@@ -401,19 +409,41 @@ function AHA17SegmentPlot() {
 
   return (
     <div className="flex flex-col items-center">
-      {/* Top WMSI Bar */}
+      {/* Top WMSI & GLS Toggle Bar */}
       <div className="w-full flex items-center justify-between text-[11px] font-mono px-1 mb-2">
-        <span className="text-slate-400">
-          WMSI: <strong className={wmsi === "1.00" ? "text-emerald-400" : "text-amber-400"}>{wmsi}</strong>
-          <span className="text-[9px] text-slate-500 ml-1">({wmsi === "1.00" ? "Normal" : "Wall Motion Abnormality"})</span>
-        </span>
-        <button
-          onClick={handleResetScores}
-          className="text-[10px] text-cyan-400 hover:text-cyan-300 underline cursor-pointer"
-          title="Reset all 17 segments to Score 1 (Normal)"
-        >
-          Reset All
-        </button>
+        <div className="flex items-center space-x-1">
+          <button
+            onClick={() => setDisplayMode("wmsi")}
+            className={`px-1.5 py-0.5 rounded text-[10px] transition cursor-pointer ${
+              displayMode === "wmsi"
+                ? "bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 font-bold"
+                : "text-slate-400 hover:text-white"
+            }`}
+          >
+            WMSI: <span className={wmsi === "1.00" ? "text-emerald-400" : "text-amber-400"}>{wmsi}</span>
+          </button>
+          <button
+            onClick={() => setDisplayMode("gls")}
+            className={`px-1.5 py-0.5 rounded text-[10px] transition cursor-pointer ${
+              displayMode === "gls"
+                ? "bg-rose-500/20 text-rose-300 border border-rose-400/40 font-bold"
+                : "text-slate-400 hover:text-white"
+            }`}
+          >
+            GLS: <span className="text-rose-400">-21.2%</span>
+          </button>
+        </div>
+        {displayMode === "wmsi" ? (
+          <button
+            onClick={handleResetScores}
+            className="text-[10px] text-cyan-400 hover:text-cyan-300 underline cursor-pointer"
+            title="Reset all 17 segments to Score 1 (Normal)"
+          >
+            Reset
+          </button>
+        ) : (
+          <span className="text-[9px] text-emerald-400 font-mono">Normal (&lt;-18%)</span>
+        )}
       </div>
 
       <div className="relative w-48 h-48 mb-2">
@@ -427,7 +457,9 @@ function AHA17SegmentPlot() {
           {SEGMENTS.map((s) => {
             const isHovered = activeSeg?.id === s.id
             const sc = segScores[s.id] || 1
-            const fillCol = isHovered ? SCORE_CONFIG[sc].hex : SCORE_CONFIG[sc].color
+            const fillCol = displayMode === "gls"
+              ? (isHovered ? "#fda4af" : getStrainColor(s.strain))
+              : (isHovered ? SCORE_CONFIG[sc].hex : SCORE_CONFIG[sc].color)
             return (
               <path
                 key={s.id}
@@ -437,7 +469,7 @@ function AHA17SegmentPlot() {
                 strokeWidth="1.5"
                 className="cursor-pointer transition-all duration-200 hover:brightness-125"
                 onMouseEnter={() => setActiveSeg(s)}
-                onClick={() => toggleScore(s.id)}
+                onClick={() => displayMode === "wmsi" && toggleScore(s.id)}
               />
             )
           })}
@@ -447,12 +479,16 @@ function AHA17SegmentPlot() {
             cx="100"
             cy="100"
             r="18"
-            fill={activeSeg?.id === 17 ? SCORE_CONFIG[segScores[17]].hex : SCORE_CONFIG[segScores[17]].color}
+            fill={
+              displayMode === "gls"
+                ? (activeSeg?.id === 17 ? "#fda4af" : getStrainColor(-23.4))
+                : (activeSeg?.id === 17 ? SCORE_CONFIG[segScores[17]].hex : SCORE_CONFIG[segScores[17]].color)
+            }
             stroke="#040711"
             strokeWidth="1.5"
             className="cursor-pointer transition-all duration-200 hover:brightness-125"
             onMouseEnter={() => setActiveSeg({ id: 17, name: "Apex (True Apical Cap)", artery: "LAD", strain: -23.4 })}
-            onClick={() => toggleScore(17)}
+            onClick={() => displayMode === "wmsi" && toggleScore(17)}
           />
         </svg>
       </div>
