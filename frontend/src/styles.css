@@ -2539,3 +2539,19 @@
 .high-contrast-mode .text-slate-300 {
   color: #f1f5f9 !important;
 }
+
+/* ====== Clinical Command Palette & Hotkey Badges ====== */
+.kbd-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.15rem 0.35rem;
+  font-size: 0.65rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  color: #94a3b8;
+  background-color: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}

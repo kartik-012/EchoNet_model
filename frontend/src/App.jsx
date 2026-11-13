@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "motion/react"
-import { Cpu, History, Eye, HelpCircle } from "lucide-react"
+import { Cpu, History, Eye, HelpCircle, Command } from "lucide-react"
 import CinematicIntro from "./components/CinematicIntro"
 import UploadStudio from "./components/UploadStudio"
 import ProcessingEnvironment from "./components/ProcessingEnvironment"
 import IntelligenceReport from "./components/IntelligenceReport"
 import ModelEvaluationModal from "./components/ModelEvaluationModal"
 import HistoryModal from "./components/HistoryModal"
+import CommandPaletteModal from "./components/CommandPaletteModal"
 import { fetchHealth } from "./services/api"
+import { generateClinicalPDF } from "./utils/pdfExport"
 
 export default function App() {
   // Application Stage: 'intro' | 'studio' | 'processing' | 'report'
@@ -33,6 +35,7 @@ export default function App() {
   // Modals
   const [isModelInfoOpen, setIsModelInfoOpen] = useState(false)
   const [isHistoryOpen, setIsHistoryOpen] = useState(false)
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false)
 
   useEffect(() => {
     fetchHealth()
@@ -40,15 +43,34 @@ export default function App() {
       .catch((err) => console.warn("Backend not yet connected:", err.message))
 
     const handleGlobalKeys = (e) => {
-      if (e.key === "?" || e.key === "h" || e.key === "H") {
-        if (!["INPUT", "TEXTAREA"].includes(document.activeElement?.tagName)) {
-          setIsModelInfoOpen((prev) => !prev)
-        }
+      const isInput = ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName)
+
+      // Open Command Palette: Ctrl+K or Cmd+K
+      if ((e.ctrlKey || e.metaKey) && (e.key === "k" || e.key === "K")) {
+        e.preventDefault()
+        setIsCommandPaletteOpen((prev) => !prev)
+        return
+      }
+
+      if (isInput) return
+
+      if (e.key === "?" || e.key === "m" || e.key === "M") {
+        setIsModelInfoOpen((prev) => !prev)
+      } else if (e.key === "h" || e.key === "H") {
+        setIsHistoryOpen((prev) => !prev)
+      } else if (e.key === "c" || e.key === "C") {
+        setHighContrast((prev) => !prev)
+      } else if (e.key === "1") {
+        setCurrentView("intro")
+      } else if (e.key === "2") {
+        setCurrentView("studio")
+      } else if (e.key === "3" && reportResult) {
+        setCurrentView("report")
       }
     }
     window.addEventListener("keydown", handleGlobalKeys)
     return () => window.removeEventListener("keydown", handleGlobalKeys)
-  }, [])
+  }, [reportResult])
 
   // Transition from Intro to Studio
   const handleEnterStudio = () => {
@@ -164,6 +186,15 @@ export default function App() {
           </button>
 
           <button
+            onClick={() => setIsCommandPaletteOpen(true)}
+            className="p-1 px-1.5 rounded bg-slate-900 border border-slate-800 text-slate-400 hover:text-cyan-300 hover:border-cyan-500/40 transition cursor-pointer flex items-center space-x-1"
+            title="Open Command Palette & Shortcuts (Ctrl+K)"
+          >
+            <Command size={11} className="text-cyan-400" />
+            <span className="text-[9px] font-mono hidden sm:inline">⌘K</span>
+          </button>
+
+          <button
             onClick={() => setIsHistoryOpen(true)}
             className="p-1 rounded hover:text-white transition cursor-pointer flex items-center space-x-1"
             title="View Study History"
@@ -272,6 +303,22 @@ export default function App() {
         onClose={() => setIsHistoryOpen(false)}
         history={studyHistory}
         onSelectHistoryCase={handleSelectHistoryCase}
+      />
+
+      <CommandPaletteModal
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+        onNavigate={(view) => setCurrentView(view)}
+        onToggleContrast={() => setHighContrast((prev) => !prev)}
+        onOpenModelInfo={() => setIsModelInfoOpen(true)}
+        onOpenHistory={() => setIsHistoryOpen(true)}
+        onExportPDF={() => {
+          if (reportResult) {
+            generateClinicalPDF(reportResult, activeConfig)
+          }
+        }}
+        hasReport={!!reportResult}
+        highContrast={highContrast}
       />
     </div>
   )
