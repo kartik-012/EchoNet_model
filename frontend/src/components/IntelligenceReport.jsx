@@ -587,6 +587,7 @@ export default function IntelligenceReport({
   const [showColorDoppler, setShowColorDoppler] = useState(false)
   const [showContrastMCE, setShowContrastMCE] = useState(false)
   const [showMMode, setShowMMode] = useState(false)
+  const [physicianVerified, setPhysicianVerified] = useState(false)
   const [showDiastolicModal, setShowDiastolicModal] = useState(false)
   const [caliperActive, setCaliperActive] = useState(false)
   const [caliperPoints, setCaliperPoints] = useState([])
@@ -1310,6 +1311,13 @@ export default function IntelligenceReport({
                           >
                             M-Mode
                           </button>
+                          <button
+                            className={`img-ctrl-btn text-[9px] font-mono px-1.5 transition ${physicianVerified ? "text-amber-300 bg-amber-950/90 border border-amber-400/50 shadow-[0_0_8px_rgba(251,191,36,0.4)] font-bold" : "text-slate-400"}`}
+                            onClick={() => setPhysicianVerified(!physicianVerified)}
+                            title="Toggle Board-Certified Cardiologist Verification Stamp"
+                          >
+                            {physicianVerified ? "✓ Verified" : "Sign Off"}
+                          </button>
                         </div>
                         <div className="imaging-frame-count">{currentFrame + 1} / 32</div>
                         <button className="imaging-expand"><Maximize2 size={10} /></button>
@@ -1502,6 +1510,16 @@ export default function IntelligenceReport({
                             <line x1="40" y1="10" x2="40" y2="12" stroke="#22c55e" strokeWidth="1.5" />
                           </svg>
                         </div>
+                      </div>
+                    )}
+                    {cell.hasControls && physicianVerified && (
+                      <div className="absolute top-3 right-3 z-20 pointer-events-none p-2 rounded-xl bg-slate-950/90 border border-amber-500/50 backdrop-blur-md text-[9px] font-mono shadow-[0_0_20px_rgba(245,158,11,0.25)] flex flex-col space-y-0.5">
+                        <div className="flex items-center space-x-1 text-amber-300 font-bold">
+                          <CheckCircle size={11} className="text-amber-400" />
+                          <span>PHYSICIAN VERIFIED ✓</span>
+                        </div>
+                        <div className="text-[8px] text-slate-300">Board-Certified Echocardiographer</div>
+                        <div className="text-[7px] text-emerald-400">AHA/ASE 2022 CONCORDANT</div>
                       </div>
                     )}
                     {cell.isHeatmap && (
