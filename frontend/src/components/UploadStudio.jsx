@@ -171,6 +171,7 @@ export default function UploadStudio({
   const [isDragOver, setIsDragOver] = useState(false)
   const [videoError, setVideoError] = useState(false)
   const [selectedProbe, setSelectedProbe] = useState("S5-1")
+  const [transducerFreq, setTransducerFreq] = useState(2.5) // MHz (1.5 - 5.0)
   const [isDicomModalOpen, setIsDicomModalOpen] = useState(false)
   const [zoomLevel, setZoomLevel] = useState(1.0)
   const [gainDb, setGainDb] = useState(52)
@@ -605,20 +606,23 @@ export default function UploadStudio({
                 ) : null}
               </motion.div>
 
-              {/* Acoustic Transducer Probe Selector */}
+              {/* Acoustic Transducer Probe Selector & Continuous Frequency Tuner */}
               <div className="w-full max-w-md p-3.5 rounded-2xl bg-black/40 border border-white/5 mb-6 text-left">
                 <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 mb-2">
                   <span className="flex items-center space-x-1.5">
                     <Radio className="w-3.5 h-3.5 text-cyan-400" />
                     <span className="text-white font-medium">Acoustic Transducer Probe</span>
                   </span>
-                  <span className="text-cyan-400 font-bold">{PROBES[selectedProbe].freq}</span>
+                  <span className="text-cyan-400 font-bold">{transducerFreq.toFixed(1)} MHz Active</span>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                   {Object.entries(PROBES).map(([key, probe]) => (
                     <button
                       key={key}
-                      onClick={() => setSelectedProbe(key)}
+                      onClick={() => {
+                        setSelectedProbe(key)
+                        setTransducerFreq(parseFloat(probe.freq.split(" ")[0]) || 2.5)
+                      }}
                       className={`p-2 rounded-xl text-left border transition cursor-pointer ${
                         selectedProbe === key
                           ? "bg-cyan-950/70 border-cyan-400 text-cyan-200 shadow-[0_0_12px_rgba(6,182,212,0.2)]"
@@ -630,10 +634,32 @@ export default function UploadStudio({
                     </button>
                   ))}
                 </div>
-                <div className="flex items-center justify-between text-[10px] font-mono text-slate-500 mt-2.5 pt-2 border-t border-white/5">
-                  <span>Depth: {PROBES[selectedProbe].depth}</span>
-                  <span>Sector: {PROBES[selectedProbe].sector}</span>
-                  <span className="text-emerald-400">Harmonics: THI Active</span>
+
+                {/* Frequency Fine-Tuning Slider */}
+                <div className="mt-3 pt-2.5 border-t border-white/5 space-y-1.5">
+                  <div className="flex items-center justify-between text-[10px] font-mono">
+                    <span className="text-slate-400">Emission Center Frequency:</span>
+                    <span className="text-cyan-300 font-bold">{transducerFreq.toFixed(1)} MHz</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-[9px] font-mono text-slate-500">1.5M</span>
+                    <input
+                      type="range"
+                      min="1.5"
+                      max="5.0"
+                      step="0.1"
+                      value={transducerFreq}
+                      onChange={(e) => setTransducerFreq(parseFloat(e.target.value))}
+                      className="flex-1 h-1 accent-cyan-400 cursor-pointer"
+                    />
+                    <span className="text-[9px] font-mono text-slate-500">5.0M</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 mt-2.5 pt-2 border-t border-white/5">
+                  <span>Res: <strong className="text-cyan-300">{(1.54 / (2 * transducerFreq)).toFixed(2)}mm</strong></span>
+                  <span>Max Depth: <strong className="text-cyan-300">{Math.round(40 / transducerFreq)}cm</strong></span>
+                  <span className="text-emerald-400">THI: {(transducerFreq * 2).toFixed(1)}MHz</span>
                 </div>
               </div>
 
