@@ -172,6 +172,8 @@ export default function UploadStudio({
   const [videoError, setVideoError] = useState(false)
   const [selectedProbe, setSelectedProbe] = useState("S5-1")
   const [transducerFreq, setTransducerFreq] = useState(2.5) // MHz (1.5 - 5.0)
+  const [depthCm, setDepthCm] = useState(16) // cm (12 - 24)
+  const [sectorAngle, setSectorAngle] = useState(75) // deg (60 - 90)
   const [isDicomModalOpen, setIsDicomModalOpen] = useState(false)
   const [zoomLevel, setZoomLevel] = useState(1.0)
   const [gainDb, setGainDb] = useState(52)
@@ -470,40 +472,74 @@ export default function UploadStudio({
                 </div>
               )}
 
-              {/* Acoustic Viewport Controls Bar */}
-              <div className="w-full max-w-md flex items-center justify-between px-3 py-1.5 rounded-xl bg-black/60 border border-white/5 mb-2 text-[10px] font-mono">
-                <div className="flex items-center space-x-2">
-                  <span className="text-slate-400">Zoom:</span>
-                  {[1.0, 1.25, 1.5].map((z) => (
-                    <button
-                      key={z}
-                      onClick={() => setZoomLevel(z)}
-                      className={`px-2 py-0.5 rounded transition ${zoomLevel === z ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40" : "text-slate-400 hover:text-white"}`}
-                    >
-                      {z}x
-                    </button>
-                  ))}
+              {/* Viewport Acoustic Parameter Tuning Bar */}
+              <div className="w-full max-w-md p-2 rounded-xl bg-black/60 border border-white/5 mb-2 text-[10px] font-mono space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-slate-400">Zoom:</span>
+                    {[1.0, 1.25, 1.5].map((z) => (
+                      <button
+                        key={z}
+                        onClick={() => setZoomLevel(z)}
+                        className={`px-1.5 py-0.5 rounded transition ${zoomLevel === z ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40" : "text-slate-400 hover:text-white"}`}
+                      >
+                        {z}x
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex items-center space-x-1.5">
+                    <span className="text-slate-400">Gain:</span>
+                    <input
+                      type="range"
+                      min="35"
+                      max="70"
+                      value={gainDb}
+                      onChange={(e) => setGainDb(parseInt(e.target.value))}
+                      className="w-14 h-1 accent-cyan-400 cursor-pointer"
+                      title="Acoustic Gain (dB)"
+                    />
+                    <span className="text-cyan-300 w-7 text-right">{gainDb}dB</span>
+                  </div>
+                  <button
+                    onClick={() => setShowSectorGrid(!showSectorGrid)}
+                    className={`px-2 py-0.5 rounded transition ${showSectorGrid ? "text-cyan-300 bg-cyan-950/60 border border-cyan-500/30 font-bold" : "text-slate-400"}`}
+                    title="Toggle Ultrasonic Sector Beam Grid"
+                  >
+                    Sector
+                  </button>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <span className="text-slate-400">Gain:</span>
-                  <input
-                    type="range"
-                    min="35"
-                    max="70"
-                    value={gainDb}
-                    onChange={(e) => setGainDb(parseInt(e.target.value))}
-                    className="w-16 h-1 accent-cyan-400 cursor-pointer"
-                    title="Acoustic Gain (dB)"
-                  />
-                  <span className="text-cyan-300 w-8 text-right">{gainDb}dB</span>
+
+                {/* Depth and Sector Angle Controls */}
+                <div className="flex items-center justify-between pt-1 border-t border-white/5 text-[9px] text-slate-400">
+                  <div className="flex items-center space-x-1">
+                    <span>Depth:</span>
+                    <input
+                      type="range"
+                      min="12"
+                      max="24"
+                      value={depthCm}
+                      onChange={(e) => setDepthCm(parseInt(e.target.value))}
+                      className="w-12 h-1 accent-cyan-400 cursor-pointer"
+                    />
+                    <span className="text-cyan-300 font-bold">{depthCm}cm</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <span>Sector:</span>
+                    <input
+                      type="range"
+                      min="60"
+                      max="90"
+                      step="5"
+                      value={sectorAngle}
+                      onChange={(e) => setSectorAngle(parseInt(e.target.value))}
+                      className="w-12 h-1 accent-cyan-400 cursor-pointer"
+                    />
+                    <span className="text-cyan-300 font-bold">{sectorAngle}°</span>
+                  </div>
+                  <div className="text-emerald-400">
+                    FR: {Math.round(154000 / (2 * depthCm * (sectorAngle * 1.3)))} fps
+                  </div>
                 </div>
-                <button
-                  onClick={() => setShowSectorGrid(!showSectorGrid)}
-                  className={`px-2 py-0.5 rounded transition ${showSectorGrid ? "text-cyan-300 bg-cyan-950/60 border border-cyan-500/30" : "text-slate-400"}`}
-                  title="Toggle Ultrasonic Sector Beam Grid"
-                >
-                  Sector
-                </button>
               </div>
 
               {/* Viewport Preview with 3D depth */}
