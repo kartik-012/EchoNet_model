@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react"
 import { motion, AnimatePresence } from "motion/react"
-import { Activity, AlertTriangle, ArrowLeft, CheckCircle2, Cpu, Sparkles, Shield, Zap, Database } from "lucide-react"
+import { Activity, AlertTriangle, ArrowLeft, CheckCircle2, Cpu, Sparkles, Shield, Zap, Database, Volume2, VolumeX } from "lucide-react"
 import { runPredictionOnFile, runPredictionOnSample } from "../services/api"
 
 const STAGES = [
@@ -11,6 +11,73 @@ const STAGES = [
   { id: 5, label: "3D Grad-CAM Attention Heatmap Backpropagation", icon: Sparkles },
   { id: 6, label: "FAISS Precedent Retrieval & Report Synthesis", icon: Zap }
 ]
+
+/* ====== Doppler Acoustic Audio Synthesizer (Pulsed-Wave Inflow Shift) ====== */
+class DopplerAudioSynth {
+  constructor() {
+    this.ctx = null
+    this.isPlaying = false
+    this.timer = null
+    this.volume = 0.25
+  }
+
+  start() {
+    if (!this.ctx) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext
+      if (!AudioCtx) return
+      this.ctx = new AudioCtx()
+    }
+    if (this.ctx.state === "suspended") this.ctx.resume()
+    this.isPlaying = true
+    this.scheduleDoppler()
+  }
+
+  stop() {
+    this.isPlaying = false
+    if (this.timer) clearTimeout(this.timer)
+  }
+
+  setVolume(vol) {
+    this.volume = Math.max(0, Math.min(1, vol))
+  }
+
+  playWhoosh(time, startFreq, endFreq, dur, vol) {
+    if (!this.ctx) return
+    const osc = this.ctx.createOscillator()
+    const gain = this.ctx.createGain()
+    const filter = this.ctx.createBiquadFilter()
+
+    osc.type = "sawtooth"
+    osc.frequency.setValueAtTime(startFreq, time)
+    osc.frequency.exponentialRampToValueAtTime(endFreq, time + dur)
+
+    filter.type = "bandpass"
+    filter.frequency.setValueAtTime((startFreq + endFreq) / 2, time)
+    filter.Q.setValueAtTime(3.5, time)
+
+    const finalVol = vol * this.volume
+    gain.gain.setValueAtTime(finalVol, time)
+    gain.gain.exponentialRampToValueAtTime(0.001, time + dur)
+
+    osc.connect(filter)
+    filter.connect(gain)
+    gain.connect(this.ctx.destination)
+
+    osc.start(time)
+    osc.stop(time + dur)
+  }
+
+  scheduleDoppler() {
+    if (!this.isPlaying || !this.ctx) return
+    const now = this.ctx.currentTime
+    // E-Wave diastolic whoosh (higher pitch, rapid inflow)
+    this.playWhoosh(now, 420, 240, 0.22, 0.3)
+    // A-Wave atrial kick whoosh (slightly lower, delayed)
+    this.playWhoosh(now + 0.35, 320, 180, 0.16, 0.2)
+
+    this.timer = setTimeout(() => this.scheduleDoppler(), 850)
+  }
+}
 
 /* ====== 3D Rotating Scanner Rings ====== */
 function ScannerRings3D() {
@@ -278,6 +345,15 @@ export default function ProcessingEnvironment({
   const [errorMsg, setErrorMsg] = useState(null)
   const [completedStages, setCompletedStages] = useState([])
   const [elapsedMs, setElapsedMs] = useState(0)
+  const [dopplerAudioEnabled, setDopplerAudioEnabled] = useState(false)
+  const dopplerSynthRef = useRef(null)
+
+  useEffect(() => {
+    dopplerSynthRef.current = new DopplerAudioSynth()
+    return () => {
+      if (dopplerSynthRef.current) dopplerSynthRef.current.stop()
+    }
+  }, [])
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -417,6 +493,28 @@ export default function ProcessingEnvironment({
         </div>
 
         <div className="flex items-center space-x-3">
+          {/* Pulsed-Wave Doppler Audio Sonification Toggle */}
+          <button
+            onClick={() => {
+              if (dopplerAudioEnabled) {
+                dopplerSynthRef.current?.stop()
+                setDopplerAudioEnabled(false)
+              } else {
+                dopplerSynthRef.current?.start()
+                setDopplerAudioEnabled(true)
+              }
+            }}
+            className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-full border text-[11px] font-mono transition cursor-pointer ${
+              dopplerAudioEnabled
+                ? "bg-cyan-950/70 border-cyan-400 text-cyan-300 shadow-[0_0_10px_rgba(6,182,212,0.2)]"
+                : "bg-white/[0.04] border-white/10 text-slate-400 hover:text-white"
+            }`}
+            title="Toggle Pulsed-Wave Doppler Inflow Audio Sonification"
+          >
+            {dopplerAudioEnabled ? <Volume2 className="w-3.5 h-3.5 text-cyan-400 animate-pulse" /> : <VolumeX className="w-3.5 h-3.5" />}
+            <span className="hidden sm:inline">{dopplerAudioEnabled ? "Doppler Audio" : "Mute Sound"}</span>
+          </button>
+
           <div className="flex items-center space-x-2 text-[11px] font-mono text-slate-400 bg-black/40 border border-white/5 px-3 py-1.5 rounded-full backdrop-blur-sm">
             <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
             <span>{(elapsedMs / 1000).toFixed(2)}s</span>
