@@ -5,6 +5,7 @@ import CinematicIntro from "./components/CinematicIntro"
 import UploadStudio from "./components/UploadStudio"
 import ProcessingEnvironment from "./components/ProcessingEnvironment"
 import IntelligenceReport from "./components/IntelligenceReport"
+import ValidationStudio from "./components/ValidationStudio"
 import ModelEvaluationModal from "./components/ModelEvaluationModal"
 import HistoryModal from "./components/HistoryModal"
 import CommandPaletteModal from "./components/CommandPaletteModal"
@@ -12,7 +13,7 @@ import { fetchHealth } from "./services/api"
 import { generateClinicalPDF } from "./utils/pdfExport"
 
 export default function App() {
-  // Application Stage: 'intro' | 'studio' | 'processing' | 'report'
+  // Application Stage: 'intro' | 'analysis' | 'intelligence' | 'validation' | 'report' | 'processing'
   const [currentView, setCurrentView] = useState("intro")
 
   // Accessibility: High-Contrast & Reduced Motion
@@ -42,6 +43,24 @@ export default function App() {
       .then(setHealth)
       .catch((err) => console.warn("Backend not yet connected:", err.message))
 
+    // Preload verified baseline study in background so Intelligence & Report views are immediately accessible
+    import("./services/api").then(({ runPredictionOnSample }) => {
+      runPredictionOnSample("0X1002E8FBACD08477.avi")
+        .then((data) => {
+          setReportResult(data)
+          setActiveConfig({
+            patientId: "STAN-TEST-1002",
+            patientAge: 58,
+            patientSex: "Female",
+            clinicalIndication: "Routine Evaluation - Preserved LVEF",
+            selectedProbe: "X5-1 xMATRIX (1-5 MHz)",
+            uncertaintyMode: "Monte Carlo Dropout (30 Iterations)",
+            calibrationStandard: "Stanford EchoNet (A4C Insonation)"
+          })
+        })
+        .catch((err) => console.warn("Background preset preload error:", err.message))
+    })
+
     const handleGlobalKeys = (e) => {
       const isInput = ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName)
 
@@ -60,21 +79,25 @@ export default function App() {
         setIsHistoryOpen((prev) => !prev)
       } else if (e.key === "c" || e.key === "C") {
         setHighContrast((prev) => !prev)
-      } else if (e.key === "1") {
+      } else if (e.key === "0") {
         setCurrentView("intro")
+      } else if (e.key === "1") {
+        setCurrentView("analysis")
       } else if (e.key === "2") {
-        setCurrentView("studio")
-      } else if (e.key === "3" && reportResult) {
+        setCurrentView("intelligence")
+      } else if (e.key === "3") {
+        setCurrentView("validation")
+      } else if (e.key === "4") {
         setCurrentView("report")
       }
     }
     window.addEventListener("keydown", handleGlobalKeys)
     return () => window.removeEventListener("keydown", handleGlobalKeys)
-  }, [reportResult])
+  }, [])
 
   // Transition from Intro to Studio
   const handleEnterStudio = () => {
-    setCurrentView("studio")
+    setCurrentView("analysis")
   }
 
   // Start AI Analysis from Studio
@@ -108,7 +131,7 @@ export default function App() {
 
   // Return to Studio from Report
   const handleReturnToStudio = () => {
-    setCurrentView("studio")
+    setCurrentView("analysis")
   }
 
   // Return to Cinematic 3D Intro from Studio
@@ -119,8 +142,7 @@ export default function App() {
   // New Analysis action from Report
   const handleNewAnalysis = () => {
     setAnalysisPayload(null)
-    setReportResult(null)
-    setCurrentView("studio")
+    setCurrentView("analysis")
   }
 
   // Reopen past case from history
@@ -133,53 +155,76 @@ export default function App() {
   return (
     <div className={`w-full min-h-screen bg-[#040711] text-slate-100 font-sans overflow-x-hidden ${highContrast ? "high-contrast-mode" : ""}`}>
       {/* Top Cyber-Medical System Telemetry Bar */}
-      <div className="cyber-telemetry-bar w-full px-4 py-1.5 flex items-center justify-between text-[11px] font-mono z-40 relative">
+      <div className="cyber-telemetry-bar w-full px-4 py-2 flex items-center justify-between text-[11px] font-mono z-40 relative border-b border-white/[0.06] bg-slate-950/80 backdrop-blur-md">
         <div className="flex items-center space-x-3">
-          <div className="flex items-center space-x-1.5 text-cyan-400">
+          <button
+            onClick={() => setCurrentView("intro")}
+            className="flex items-center space-x-1.5 text-cyan-400 hover:text-cyan-300 transition cursor-pointer"
+            title="Go to Home"
+          >
             <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-            <span className="font-bold tracking-wider">ECHOCARD-AI</span>
-          </div>
-          <span className="text-slate-600 hidden sm:inline">|</span>
+            <span className="font-bold tracking-wider font-mono">ECHOCARD-AI</span>
+          </button>
+          <span className="text-slate-700 hidden sm:inline">|</span>
           <div className="flex items-center space-x-1.5 text-slate-400 hidden sm:flex">
             <Cpu size={12} className="text-cyan-400" />
             <span>CUDA RTX 3050 (12ms WS)</span>
           </div>
-          <span className="text-slate-600 hidden md:inline">|</span>
+          <span className="text-slate-700 hidden md:inline">|</span>
           <span className="text-slate-400 hidden md:inline">DICOM PS 3.3 • 32F @ 50fps</span>
         </div>
 
-        {/* View Switcher / Quick Navigation */}
-        <div className="flex items-center space-x-1">
+        {/* 4 CORE PILLARS TOP NAVIGATION BAR (Exact match to Image 2) */}
+        <div className="flex items-center space-x-1 sm:space-x-1.5 bg-slate-900/90 border border-slate-800/80 rounded-2xl p-1 backdrop-blur-md shadow-xl">
+          {/* Quick Hero Toggle */}
+          <button
+            onClick={() => setCurrentView("intro")}
+            className={`px-2.5 sm:px-3 py-1 rounded-xl text-[11px] font-medium transition cursor-pointer flex items-center space-x-1 ${
+              currentView === "intro"
+                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 font-bold"
+                : "text-slate-400 hover:text-white"
+            }`}
+            title="3D Cinematic Heart Landing Hero"
+          >
+            <span>✨ 3D Hero</span>
+          </button>
+
+          <div className="w-px h-3.5 bg-slate-700/60 self-center" />
+
+          {/* 4 Core Pillars from Image 2 */}
           {[
-            { id: "intro", label: "Intro" },
-            { id: "studio", label: "Studio" },
-            { id: "report", label: "Report", disabled: !reportResult }
-          ].map((v) => (
-            <button
-              key={v.id}
-              disabled={v.disabled}
-              onClick={() => setCurrentView(v.id)}
-              className={`px-2 py-0.5 rounded text-[10px] transition cursor-pointer ${
-                currentView === v.id
-                  ? "bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 font-bold"
-                  : v.disabled
-                  ? "text-slate-600 cursor-not-allowed opacity-40"
-                  : "text-slate-400 hover:text-white"
-              }`}
-            >
-              {v.label}
-            </button>
-          ))}
+            { id: "analysis", label: "Analysis" },
+            { id: "intelligence", label: "Intelligence" },
+            { id: "validation", label: "Validation" },
+            { id: "report", label: "Report" }
+          ].map((tab) => {
+            const isActive =
+              currentView === tab.id ||
+              (tab.id === "analysis" && currentView === "studio")
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setCurrentView(tab.id)}
+                className={`relative px-3.5 sm:px-5 py-1 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer ${
+                  isActive
+                    ? "bg-[#00c5e0] text-slate-950 font-bold shadow-lg shadow-cyan-500/25"
+                    : "text-slate-300 hover:text-white hover:bg-white/[0.04]"
+                }`}
+              >
+                {tab.label}
+              </button>
+            )
+          })}
         </div>
 
         {/* Global Action Icons */}
         <div className="flex items-center space-x-2 text-slate-400">
           <button
             onClick={() => setHighContrast(!highContrast)}
-            className={`p-1 rounded hover:text-white transition cursor-pointer flex items-center space-x-1 ${
-              highContrast ? "text-amber-400 bg-amber-950/40 border border-amber-500/30" : "text-slate-400"
+            className={`p-1.5 rounded-lg hover:text-white transition cursor-pointer flex items-center space-x-1 ${
+              highContrast ? "text-amber-400 bg-amber-950/40 border border-amber-500/30" : "text-slate-400 hover:bg-slate-800"
             }`}
-            title="Toggle Clinical High-Contrast Mode"
+            title="Toggle Clinical High-Contrast Mode (C)"
           >
             <Eye size={12} />
             <span className="text-[9px] hidden lg:inline">{highContrast ? "Contrast ON" : "Contrast"}</span>
@@ -187,7 +232,7 @@ export default function App() {
 
           <button
             onClick={() => setIsCommandPaletteOpen(true)}
-            className="p-1 px-1.5 rounded bg-slate-900 border border-slate-800 text-slate-400 hover:text-cyan-300 hover:border-cyan-500/40 transition cursor-pointer flex items-center space-x-1"
+            className="p-1 px-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-cyan-300 hover:border-cyan-500/40 transition cursor-pointer flex items-center space-x-1"
             title="Open Command Palette & Shortcuts (Ctrl+K)"
           >
             <Command size={11} className="text-cyan-400" />
@@ -196,8 +241,8 @@ export default function App() {
 
           <button
             onClick={() => setIsHistoryOpen(true)}
-            className="p-1 rounded hover:text-white transition cursor-pointer flex items-center space-x-1"
-            title="View Study History"
+            className="p-1.5 rounded-lg hover:text-white hover:bg-slate-800 transition cursor-pointer flex items-center space-x-1"
+            title="View Study History (H)"
           >
             <History size={12} className="text-cyan-400" />
             <span className="text-[10px] bg-cyan-950/80 text-cyan-300 px-1 rounded-full border border-cyan-500/30">
@@ -207,8 +252,8 @@ export default function App() {
 
           <button
             onClick={() => setIsModelInfoOpen(true)}
-            className="p-1 rounded hover:text-white transition cursor-pointer"
-            title="Model Verification & Benchmark (Press ?)"
+            className="p-1.5 rounded-lg hover:text-white hover:bg-slate-800 transition cursor-pointer"
+            title="Model Verification & Benchmark (?)"
           >
             <HelpCircle size={12} />
           </button>
@@ -223,25 +268,26 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.35 }}
             className="w-full h-full"
           >
             <CinematicIntro
               onEnterStudio={handleEnterStudio}
               reducedMotion={reducedMotion}
               setReducedMotion={setReducedMotion}
+              onNavigate={(v) => setCurrentView(v)}
             />
           </motion.div>
         )}
 
-        {/* 2. UPLOAD STUDIO (FOCUSED DRAG & DROP — NO SIDEBAR, NO TABS) */}
-        {currentView === "studio" && (
+        {/* 2. PILLAR 1: ANALYSIS (UPLOAD STUDIO) */}
+        {(currentView === "analysis" || currentView === "studio") && (
           <motion.div
-            key="studio"
+            key="analysis"
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -15 }}
-            transition={{ duration: 0.4 }}
+            transition={{ duration: 0.3 }}
             className="w-full h-full"
           >
             <UploadStudio
@@ -270,14 +316,14 @@ export default function App() {
           </motion.div>
         )}
 
-        {/* 4. PROFESSIONAL MEDICAL INTELLIGENCE REPORT (FULL WIDTH, NO SIDEBAR) */}
-        {currentView === "report" && reportResult && (
+        {/* 4. PILLAR 2: INTELLIGENCE (3D SPATIOTEMPORAL & GRAD-CAM WORKSTATION) */}
+        {currentView === "intelligence" && reportResult && (
           <motion.div
-            key="report"
-            initial={{ opacity: 0, y: 20 }}
+            key="intelligence"
+            initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.5 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.35 }}
             className="w-full h-full"
           >
             <IntelligenceReport
@@ -285,7 +331,48 @@ export default function App() {
               studyConfig={activeConfig}
               onReturnToStudio={handleReturnToStudio}
               onNewAnalysis={handleNewAnalysis}
-              onOpenModelInfo={() => setIsModelInfoOpen(true)}
+              onOpenModelInfo={() => setCurrentView("validation")}
+              onNavigate={(v) => setCurrentView(v)}
+              defaultNavTab="Intelligence"
+            />
+          </motion.div>
+        )}
+
+        {/* 5. PILLAR 3: VALIDATION (HELD-OUT BENCHMARKS & ROBUSTNESS SUITE) */}
+        {currentView === "validation" && (
+          <motion.div
+            key="validation"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.35 }}
+            className="w-full h-full"
+          >
+            <ValidationStudio
+              health={health}
+              onNavigate={(v) => setCurrentView(v)}
+            />
+          </motion.div>
+        )}
+
+        {/* 6. PILLAR 4: REPORT (CLINICAL PACS DOSSIER & SIMPSON'S VOLUME CURVE) */}
+        {currentView === "report" && reportResult && (
+          <motion.div
+            key="report"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.35 }}
+            className="w-full h-full"
+          >
+            <IntelligenceReport
+              result={reportResult}
+              studyConfig={activeConfig}
+              onReturnToStudio={handleReturnToStudio}
+              onNewAnalysis={handleNewAnalysis}
+              onOpenModelInfo={() => setCurrentView("validation")}
+              onNavigate={(v) => setCurrentView(v)}
+              defaultNavTab="Report"
             />
           </motion.div>
         )}

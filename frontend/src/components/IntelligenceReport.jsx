@@ -574,7 +574,9 @@ export default function IntelligenceReport({
   studyConfig,
   onReturnToStudio,
   onNewAnalysis,
-  onOpenModelInfo
+  onOpenModelInfo,
+  onNavigate,
+  defaultNavTab = "Report"
 }) {
   const [currentFrame, setCurrentFrame] = useState(16)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -597,7 +599,7 @@ export default function IntelligenceReport({
   const [bsaInput, setBsaInput] = useState(1.85)
   const [hybridWeightNN, setHybridWeightNN] = useState(0.70)
   const playTimerRef = useRef(null)
-  const [activeNav, setActiveNav] = useState("Analysis")
+  const [activeNav, setActiveNav] = useState(defaultNavTab)
   const [reportTab, setReportTab] = useState("doctor-report")
   const [nyhaClass, setNyhaClass] = useState("I")
   const [patientSbp, setPatientSbp] = useState(120)
@@ -1038,7 +1040,22 @@ export default function IntelligenceReport({
             <button
               key={tab}
               className={`dash-nav-btn ${activeNav === tab ? "active" : ""}`}
-              onClick={() => setActiveNav(tab)}
+              onClick={() => {
+                setActiveNav(tab)
+                if (tab === "Analysis") {
+                  if (onNavigate) onNavigate("analysis")
+                  else if (onReturnToStudio) onReturnToStudio()
+                } else if (tab === "Validation") {
+                  if (onNavigate) onNavigate("validation")
+                  else if (onOpenModelInfo) onOpenModelInfo()
+                } else if (tab === "Intelligence") {
+                  const el = document.getElementById("section-intelligence")
+                  if (el) el.scrollIntoView({ behavior: "smooth" })
+                } else if (tab === "Report") {
+                  const el = document.getElementById("section-report")
+                  if (el) el.scrollIntoView({ behavior: "smooth" })
+                }
+              }}
             >
               {tab}
               {activeNav === tab && (
@@ -1086,7 +1103,7 @@ export default function IntelligenceReport({
         {/* ============================================================ */}
         {/* ROW 1: Imaging Analysis | Spatiotemporal | Multi-Model */}
         {/* ============================================================ */}
-        <div className="dash-row dash-row-1">
+        <div id="section-intelligence" className="dash-row dash-row-1">
 
           {/* IMAGING ANALYSIS OVERVIEW */}
           <Panel3D className="imaging-panel" delay={0.2}>
@@ -2124,7 +2141,7 @@ export default function IntelligenceReport({
         {/* ============================================================ */}
         {/* ROW 3: Clinical Report | EchoJarvis Copilot */}
         {/* ============================================================ */}
-        <div className="dash-row dash-row-3">
+        <div id="section-report" className="dash-row dash-row-3">
 
           {/* CLINICAL INTELLIGENCE REPORT */}
           <Panel3D className="report-panel" delay={1.0} tiltIntensity={4}>

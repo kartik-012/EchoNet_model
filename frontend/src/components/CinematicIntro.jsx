@@ -1,7 +1,25 @@
 import React, { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "motion/react"
 import ThreeHeartCanvas from "./ThreeHeartCanvas"
-import { ArrowRight, Sparkles, Volume2, VolumeX, Eye, Activity } from "lucide-react"
+import {
+  Heart,
+  Activity,
+  Sparkles,
+  Volume2,
+  VolumeX,
+  Maximize2,
+  Minimize2,
+  RotateCcw,
+  Zap,
+  ArrowRight,
+  Shield,
+  Layers,
+  ChevronRight,
+  X,
+  Eye,
+  Sliders,
+  Cpu
+} from "lucide-react"
 
 /* ================================================================ */
 /* ORGANIC WEB AUDIO HEARTBEAT SYNTHESIZER (Lub-Dub S1/S2 Transients) */
@@ -11,11 +29,11 @@ class HeartAudioSynth {
     this.ctx = null
     this.isPlaying = false
     this.timer = null
-    this.bpm = 72
-    this.volume = 0.5
+    this.bpm = 96
+    this.volume = 0.4
   }
 
-  start(bpm = 72) {
+  start(bpm = 96) {
     this.bpm = bpm
     if (!this.ctx) {
       const AudioCtx = window.AudioContext || window.webkitAudioContext
@@ -72,49 +90,42 @@ class HeartAudioSynth {
     const now = this.ctx.currentTime
     // S1: Lub (longer, deeper pitch, 56Hz, ~0.15s)
     this.playThump(now, 56, 0.15, 0.4)
-    // S2: Dub (sharper, slightly higher, 74Hz, ~0.11s, delayed by ~0.14s)
-    this.playThump(now + 0.14, 74, 0.11, 0.3)
+    // S2: Dub (sharper, slightly higher, 74Hz, ~0.13s, delayed by ~0.13s)
+    this.playThump(now + 0.13, 74, 0.11, 0.3)
 
     const intervalMs = (60 / this.bpm) * 1000
     this.timer = setTimeout(() => this.scheduleBeat(), intervalMs)
   }
 }
 
-const RHYTHMS = [
-  { id: "normal", bpm: 72, label: "Normal Sinus (72 BPM)", badge: "Normal" },
-  { id: "tachy", bpm: 110, label: "Tachycardia (110 BPM)", badge: "Elevated" },
-  { id: "brady", bpm: 48, label: "Bradycardia (48 BPM)", badge: "Resting" }
-]
+export default function CinematicIntro({ onEnterStudio, reducedMotion, setReducedMotion, onNavigate }) {
+  // Render Mode: "master" (Screenshot Realistic Art) vs "webgl" (Interactive 3D Three.js Orbit)
+  const [renderMode, setRenderMode] = useState("master")
 
-const ANGLES = [
-  { id: "anterior", label: "Anterior Sternocostal", tag: "ANT" },
-  { id: "apical", label: "Apical 4-Chamber (A4C)", tag: "A4C" },
-  { id: "lateral", label: "Left Lateral Oblique", tag: "LAT" },
-  { id: "parasternal", label: "Parasternal Long-Axis", tag: "PLAX" },
-  { id: "posterior", label: "Posterior Base", tag: "POST" }
-]
-
-const LAYERS = [
-  { id: "solid", label: "Solid Myocardium" },
-  { id: "xray", label: "X-Ray Translucent" },
-  { id: "wireframe", label: "Chamber Wireframe" }
-]
-
-const PHASES = [
-  { id: "dynamic", label: "Full Dynamic Cycle", tag: "ALL" },
-  { id: "ed", label: "End-Diastole (Maximal Filling)", tag: "ED" },
-  { id: "es", label: "End-Systole (Peak Contraction)", tag: "ES" },
-  { id: "early_dia", label: "Early Diastolic Inflow", tag: "E-DIA" }
-]
-
-export default function CinematicIntro({ onEnterStudio, reducedMotion, setReducedMotion }) {
+  const [bpm, setBpm] = useState(96)
+  const [bloodCount, setBloodCount] = useState(80)
+  const [audioEnabled, setAudioEnabled] = useState(false)
+  const [audioVolume, setAudioVolume] = useState(0.4)
+  const [isFullscreen, setIsFullscreen] = useState(false)
   const [isTransitioning, setIsTransitioning] = useState(false)
-  const [bpm, setBpm] = useState(72)
+
+  // Modals
+  const [activeStoryModal, setActiveStoryModal] = useState(false)
+  const [activeServicesModal, setActiveServicesModal] = useState(false)
+  const [activePlansModal, setActivePlansModal] = useState(false)
+  const [activeAboutModal, setActiveAboutModal] = useState(false)
+  const [showPresetsMenu, setShowPresetsMenu] = useState(false)
+  const [showEffectsControl, setShowEffectsControl] = useState(false)
+
+  // 3D WebGL State
   const [cameraAngle, setCameraAngle] = useState("anterior")
   const [anatomicalLayer, setAnatomicalLayer] = useState("solid")
   const [cardiacPhase, setCardiacPhase] = useState("dynamic")
-  const [audioEnabled, setAudioEnabled] = useState(false)
-  const [audioVolume, setAudioVolume] = useState(0.5)
+
+  // Interactive mouse parallax & 3D tilt
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
+  const [cardTilt, setCardTilt] = useState({ rx: 0, ry: 0 })
+
   const audioSynthRef = useRef(null)
 
   useEffect(() => {
@@ -123,6 +134,17 @@ export default function CinematicIntro({ onEnterStudio, reducedMotion, setReduce
       if (audioSynthRef.current) audioSynthRef.current.stop()
     }
   }, [])
+
+  // Smooth mouse tracking with spring dampening
+  const handleMouseMove = (e) => {
+    const { clientX, clientY } = e
+    const centerX = window.innerWidth / 2
+    const centerY = window.innerHeight / 2
+    const deltaX = (clientX - centerX) / centerX
+    const deltaY = (clientY - centerY) / centerY
+    setMousePos({ x: deltaX * 14, y: deltaY * 14 })
+    setCardTilt({ rx: -deltaY * 8, ry: deltaX * 8 })
+  }
 
   const toggleAudio = () => {
     if (!audioSynthRef.current) return
@@ -136,369 +158,654 @@ export default function CinematicIntro({ onEnterStudio, reducedMotion, setReduce
     }
   }
 
-  const handleVolumeChange = (newVol) => {
-    setAudioVolume(newVol)
-    if (audioSynthRef.current) {
-      audioSynthRef.current.setVolume(newVol)
-    }
-  }
-
-  const handleSelectRhythm = (newBpm) => {
+  const handleBpmChange = (newBpm) => {
     setBpm(newBpm)
     if (audioSynthRef.current && audioEnabled) {
       audioSynthRef.current.setBpm(newBpm)
     }
   }
 
-  const handleStartTransition = () => {
-    if (isTransitioning) return
-    if (audioSynthRef.current) audioSynthRef.current.stop()
-    setIsTransitioning(true)
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {})
+      setIsFullscreen(true)
+    } else {
+      document.exitFullscreen().catch(() => {})
+      setIsFullscreen(false)
+    }
   }
 
-  const handleTransitionComplete = () => {
-    onEnterStudio()
+  // Trigger Apple-grade hyperspace transition into studio
+  const handleLaunchStudio = () => {
+    setIsTransitioning(true)
+    setTimeout(() => {
+      onEnterStudio()
+    }, 700)
   }
 
   return (
-    <div className="relative w-full h-screen overflow-hidden bg-[#040711] text-slate-100 select-none flex flex-col justify-between">
-      {/* 3D Heart Canvas Background */}
-      <ThreeHeartCanvas
-        isTransitioning={isTransitioning}
-        onTransitionComplete={handleTransitionComplete}
-        reducedMotion={reducedMotion}
-        bpm={bpm}
-        cameraAngle={cameraAngle}
-        anatomicalLayer={anatomicalLayer}
-        cardiacPhase={cardiacPhase}
-      />
-
-      {/* Atmospheric Vignette */}
-      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,transparent_35%,rgba(4,7,17,0.7)_80%,rgba(4,7,17,0.95)_100%)] z-10" />
-
-      {/* Animated grid background */}
-      <div className="absolute inset-0 pointer-events-none z-[5] opacity-[0.01]" style={{
-        backgroundImage: `
-          linear-gradient(rgba(6,182,212,0.4) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(6,182,212,0.4) 1px, transparent 1px)
-        `,
-        backgroundSize: "80px 80px"
-      }} />
-
-      {/* Floating particles */}
-      <div className="absolute inset-0 pointer-events-none z-[8]">
-        {Array.from({ length: 12 }, (_, i) => (
-          <div
-            key={i}
-            className="absolute rounded-full"
-            style={{
-              left: `${10 + Math.random() * 80}%`,
-              top: `${10 + Math.random() * 80}%`,
-              width: `${Math.random() * 2 + 1}px`,
-              height: `${Math.random() * 2 + 1}px`,
-              background: "#06b6d4",
-              opacity: 0.12,
-              boxShadow: "0 0 6px rgba(6,182,212,0.4)",
-              animation: `floatParticle ${15 + Math.random() * 15}s ease-in-out ${Math.random() * 8}s infinite`
-            }}
-          />
-        ))}
+    <div
+      onMouseMove={handleMouseMove}
+      className="relative w-full min-h-screen bg-[#07090e] text-[#f8fafc] overflow-hidden flex items-center justify-center p-3 sm:p-6 md:p-8 select-none"
+    >
+      {/* BACKGROUND PARTICLES & GLOW (Smooth atmospheric depth) */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute -top-40 -left-40 w-[550px] h-[550px] bg-cyan-900/15 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute -bottom-40 -right-40 w-[600px] h-[600px] bg-emerald-900/15 rounded-full blur-[140px] animate-pulse" style={{ animationDelay: "2s" }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-red-950/10 rounded-full blur-[160px]" />
       </div>
 
-      {/* TOP BAR */}
-      <motion.header
-        className={`relative z-20 px-8 sm:px-10 py-6 sm:py-8 flex items-center justify-between transition-all duration-700 ${isTransitioning ? "opacity-0 -translate-y-4" : "opacity-100"}`}
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: isTransitioning ? 0 : 1, y: isTransitioning ? -20 : 0 }}
-        transition={{ duration: 0.6 }}
+      {/* OUTER CINEMATIC BEZEL CONTAINER (Pixel-perfect match to screenshot) */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96 }}
+        animate={{ opacity: 1, scale: isTransitioning ? 1.04 : 1 }}
+        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        className="relative w-full max-w-[1380px] h-[92vh] max-h-[920px] bg-[#0c0f17] border border-white/[0.08] rounded-[28px] sm:rounded-[36px] overflow-hidden shadow-[0_25px_80px_rgba(0,0,0,0.85)] flex flex-col justify-between p-6 sm:p-10 md:p-12 z-10"
       >
-        <div className="flex items-center space-x-3">
+        {/* Hyperspace Scanning Laser Line (Triggered on launch) */}
+        {isTransitioning && (
           <motion.div
-            className="w-2.5 h-2.5 rounded-full bg-cyan-400"
-            animate={{
-              boxShadow: [
-                "0 0 8px rgba(6,182,212,0.4)",
-                "0 0 18px rgba(6,182,212,0.9)",
-                "0 0 8px rgba(6,182,212,0.4)"
-              ]
-            }}
-            transition={{ duration: 2, repeat: Infinity }}
+            initial={{ top: "-10%" }}
+            animate={{ top: "110%" }}
+            transition={{ duration: 0.7, ease: "easeInOut" }}
+            className="absolute left-0 right-0 h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent shadow-[0_0_30px_#06b6d4] z-50 pointer-events-none"
           />
-          <div className="flex items-baseline space-x-2">
-            <span className="text-lg font-semibold tracking-tight text-white">
-              EchoCard<span className="text-cyan-400 font-bold">·AI</span>
-            </span>
-            <span className="hidden sm:inline-block text-[11px] font-mono text-cyan-400/70 border border-cyan-500/20 px-2 py-0.5 rounded-full bg-cyan-950/30">
-              v2.4 PACS Ready
-            </span>
-          </div>
-        </div>
+        )}
 
-        <div className="flex items-center space-x-3 sm:space-x-4">
-          {/* Heartbeat Sound Synth & Visualizer HUD */}
-          <div className="flex items-center space-x-2 px-2.5 py-1.5 rounded-lg border border-white/10 bg-white/[0.02] backdrop-blur-sm">
-            <motion.button
-              onClick={toggleAudio}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className={`flex items-center space-x-1.5 text-[11px] font-mono cursor-pointer transition ${
-                audioEnabled ? "text-cyan-300" : "text-slate-400 hover:text-white"
-              }`}
-              title="Toggle Web Audio S1/S2 Heartbeat Synth"
+        {/* ========================================================
+            TOP BAR: LOGO + NAVIGATION PILLS
+            ======================================================== */}
+        <header className="relative z-20 flex items-center justify-between w-full">
+          {/* Top-Left: Green Plus Badge + H+ MEDICAL Logo */}
+          <motion.div
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            className="flex items-center space-x-3 cursor-pointer"
+            onClick={() => setActiveAboutModal(true)}
+          >
+            <div className="w-8 h-8 rounded-full bg-[#84cc16] flex items-center justify-center text-black font-extrabold text-base shadow-[0_0_20px_rgba(132,204,22,0.6)]">
+              +
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm font-extrabold tracking-[0.2em] text-white uppercase font-sans">
+                H+ MEDICAL
+              </span>
+              <span className="text-[9px] font-mono tracking-widest text-slate-400 uppercase -mt-0.5">
+                EchoCard·AI PACS
+              </span>
+            </div>
+          </motion.div>
+
+          {/* Top-Right: Pill Navigation Capsules */}
+          <nav className="flex items-center space-x-2 sm:space-x-3 text-xs font-medium">
+            <button
+              onClick={() => setActiveServicesModal(true)}
+              className="px-4 py-1.5 rounded-full bg-white/[0.04] hover:bg-white/[0.1] text-slate-200 hover:text-white border border-white/[0.08] transition duration-200 cursor-pointer"
             >
-              {audioEnabled ? <Volume2 className="w-3.5 h-3.5 text-cyan-400 animate-pulse" /> : <VolumeX className="w-3.5 h-3.5" />}
-              <span>{audioEnabled ? "S1/S2 Sound" : "Muted"}</span>
+              Services
+            </button>
+            <button
+              onClick={() => setActivePlansModal(true)}
+              className="px-4 py-1.5 rounded-full bg-white/[0.04] hover:bg-white/[0.1] text-slate-200 hover:text-white border border-white/[0.08] transition duration-200 cursor-pointer"
+            >
+              Plans
+            </button>
+            <button
+              onClick={() => setActiveAboutModal(true)}
+              className="px-4 py-1.5 rounded-full bg-white/[0.04] hover:bg-white/[0.1] text-slate-200 hover:text-white border border-white/[0.08] transition duration-200 cursor-pointer"
+            >
+              About
+            </button>
+
+            {/* Render Mode Switcher Pill */}
+            <button
+              onClick={() => setRenderMode(renderMode === "master" ? "webgl" : "master")}
+              className="hidden sm:flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/60 transition cursor-pointer text-xs font-mono"
+              title="Toggle between Master Art & 3D WebGL Orbit"
+            >
+              <Cpu size={12} className={renderMode === "webgl" ? "text-cyan-400" : "text-emerald-400"} />
+              <span>{renderMode === "master" ? "3D Mesh Orbit" : "Master Render"}</span>
+            </button>
+
+            {/* Quick Action: Enter PACS Studio */}
+            <motion.button
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
+              onClick={handleLaunchStudio}
+              className="hidden md:flex items-center space-x-1.5 px-4 py-1.5 rounded-full bg-cyan-950/70 hover:bg-cyan-900 text-cyan-300 border border-cyan-400/40 transition duration-200 cursor-pointer text-xs font-semibold shadow-[0_0_15px_rgba(6,182,212,0.25)]"
+            >
+              <Zap size={12} className="text-cyan-400 animate-pulse" />
+              <span>PACS Studio</span>
+            </motion.button>
+          </nav>
+        </header>
+
+        {/* ========================================================
+            CENTER CONTENT AREA:
+            LEFT: TYPOGRAPHY ("Stronger Hearts — Longer Lives")
+            CENTER/RIGHT: 3D ANATOMICAL HEART + FLOATING CARDS
+            ======================================================== */}
+        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 items-center flex-1 my-auto w-full gap-8">
+          
+          {/* LEFT COLUMN: DESCRIPTION & DISPLAY HEADLINE */}
+          <div className="lg:col-span-5 flex flex-col justify-center items-start text-left z-20 pointer-events-auto">
+            {/* Introductory Blurb */}
+            <motion.p
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1, duration: 0.5 }}
+              className="text-xs sm:text-sm text-slate-400 font-light leading-relaxed max-w-[280px] sm:max-w-[320px] mb-4"
+            >
+              Advanced cardiology care designed to detect, protect and strengthen your heart.
+            </motion.p>
+
+            {/* READ OUR STORY Link */}
+            <motion.button
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+              onClick={() => setActiveStoryModal(true)}
+              className="text-[11px] font-bold tracking-[0.16em] uppercase text-slate-300 hover:text-white border-b border-slate-500 hover:border-white pb-0.5 transition duration-200 mb-8 sm:mb-14 cursor-pointer"
+            >
+              READ OUR STORY
             </motion.button>
 
-            {audioEnabled && (
-              <>
-                <div className="flex items-center space-x-1 pl-1 border-l border-white/10">
-                  <input
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.05"
-                    value={audioVolume}
-                    onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
-                    className="w-14 h-1 accent-cyan-400 cursor-pointer"
-                    title={`Volume: ${Math.round(audioVolume * 100)}%`}
-                  />
-                  <span className="text-[10px] font-mono text-cyan-400 w-7 text-right">
-                    {Math.round(audioVolume * 100)}%
-                  </span>
-                </div>
+            {/* GIANT DISPLAY HEADLINE (EXACT BEIGE COLOR & TIGHT PROPORTIONS) */}
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+              className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight text-[#f3efe6] leading-[0.94] font-sans"
+            >
+              Stronger<br />
+              Hearts —<br />
+              Longer Lives
+            </motion.h1>
+          </div>
 
-                {/* Animated Audio Equalizer Bars */}
-                <div className="flex items-end space-x-0.5 h-3 px-1">
-                  {[0.4, 0.8, 1.0, 0.6, 0.9].map((h, i) => (
-                    <motion.div
-                      key={i}
-                      className="w-0.5 bg-cyan-400 rounded-full"
-                      animate={{
-                        height: ["2px", `${h * 12}px`, "2px"]
-                      }}
-                      transition={{
-                        duration: 60 / bpm,
-                        repeat: Infinity,
-                        delay: i * 0.08,
-                        ease: "easeInOut"
-                      }}
+          {/* CENTER / RIGHT: 3D ANATOMICAL HEART + FLOATING TELEMETRY CARDS */}
+          <div className="lg:col-span-7 relative flex items-center justify-center h-full min-h-[380px] sm:min-h-[460px]">
+            
+            {/* MODE 1: MASTER REALISTIC ANATOMICAL HEART (Exact match to screenshot) */}
+            {renderMode === "master" && (
+              <>
+                {/* ROTATING ORBITAL GLOWING ELLIPSE LINES (From Screenshot) */}
+                <svg
+                  className="absolute inset-0 w-full h-full pointer-events-none opacity-45"
+                  viewBox="0 0 600 600"
+                >
+                  <ellipse
+                    cx="300"
+                    cy="300"
+                    rx="240"
+                    ry="170"
+                    fill="none"
+                    stroke="rgba(255, 255, 255, 0.12)"
+                    strokeWidth="1.2"
+                    strokeDasharray="4 6"
+                    transform="rotate(-25 300 300)"
+                  />
+                  <ellipse
+                    cx="300"
+                    cy="300"
+                    rx="275"
+                    ry="195"
+                    fill="none"
+                    stroke="rgba(6, 182, 212, 0.18)"
+                    strokeWidth="1.2"
+                    transform="rotate(15 300 300)"
+                  />
+                  {/* Traveling Orbital Pulse Particle */}
+                  <circle cx="300" cy="130" r="3.5" fill="#38bdf8" filter="drop-shadow(0 0 6px #06b6d4)">
+                    <animateTransform
+                      attributeName="transform"
+                      type="rotate"
+                      from="0 300 300"
+                      to="360 300 300"
+                      dur="16s"
+                      repeatCount="indefinite"
                     />
-                  ))}
-                </div>
+                  </circle>
+                  <circle cx="300" cy="470" r="2.5" fill="#10b981" filter="drop-shadow(0 0 4px #10b981)">
+                    <animateTransform
+                      attributeName="transform"
+                      type="rotate"
+                      from="360 300 300"
+                      to="0 300 300"
+                      dur="22s"
+                      repeatCount="indefinite"
+                    />
+                  </circle>
+                </svg>
+
+                {/* THE ANATOMICAL HEART (WITH REALISTIC DUAL-PHASE LUB-DUB PULSE & PARALLAX) */}
+                <motion.div
+                  style={{
+                    x: mousePos.x,
+                    y: mousePos.y,
+                    rotateX: cardTilt.rx * 0.5,
+                    rotateY: cardTilt.ry * 0.5
+                  }}
+                  animate={reducedMotion ? {} : {
+                    scale: [1, 1.042, 0.982, 1.025, 1],
+                    rotate: [0, -0.8, 0.5, -0.3, 0]
+                  }}
+                  transition={{
+                    duration: 60 / bpm,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                  className="relative z-10 flex items-center justify-center cursor-pointer"
+                  onClick={toggleAudio}
+                  title="Click to toggle Web Audio organic heartbeat sound"
+                >
+                  <img
+                    src="/heart_hero_clean.png"
+                    alt="Realistic 3D Anatomical Heart"
+                    className="max-h-[380px] sm:max-h-[460px] md:max-h-[520px] w-auto object-contain drop-shadow-[0_20px_70px_rgba(0,0,0,0.95)]"
+                  />
+                </motion.div>
               </>
             )}
-          </div>
 
-          {/* Fluid Motion Toggle */}
-          <motion.button
-            onClick={() => setReducedMotion(!reducedMotion)}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="text-[11px] text-slate-400 hover:text-cyan-300 transition font-mono px-3 py-1.5 rounded-lg border border-white/10 bg-white/[0.02] backdrop-blur-sm cursor-pointer"
-          >
-            {reducedMotion ? "Motion: Static" : "Motion: Fluid 3D"}
-          </motion.button>
-        </div>
-      </motion.header>
+            {/* MODE 2: INTERACTIVE 3D WEBGL THREE.JS MESH (User can orbit 360°) */}
+            {renderMode === "webgl" && (
+              <div className="absolute inset-0 w-full h-full z-10 rounded-2xl overflow-hidden">
+                <ThreeHeartCanvas
+                  isTransitioning={isTransitioning}
+                  onTransitionComplete={onEnterStudio}
+                  reducedMotion={reducedMotion}
+                  bpm={bpm}
+                  cameraAngle={cameraAngle}
+                  anatomicalLayer={anatomicalLayer}
+                  cardiacPhase={cardiacPhase}
+                />
+                {/* 3D Camera & Layer Controls Overlay */}
+                <div className="absolute top-2 right-2 z-20 flex flex-wrap gap-1.5 p-2 bg-slate-950/80 backdrop-blur-md rounded-xl border border-white/10 text-[10px] font-mono">
+                  {["anterior", "apical", "lateral", "parasternal"].map((ang) => (
+                    <button
+                      key={ang}
+                      onClick={() => setCameraAngle(ang)}
+                      className={`px-2 py-0.5 rounded cursor-pointer ${
+                        cameraAngle === ang ? "bg-cyan-500/30 text-cyan-300 font-bold border border-cyan-400/40" : "text-slate-400 hover:text-white"
+                      }`}
+                    >
+                      {ang.toUpperCase()}
+                    </button>
+                  ))}
+                  <div className="w-px h-3 bg-white/20 self-center" />
+                  {["solid", "xray", "wireframe"].map((lyr) => (
+                    <button
+                      key={lyr}
+                      onClick={() => setAnatomicalLayer(lyr)}
+                      className={`px-2 py-0.5 rounded cursor-pointer ${
+                        anatomicalLayer === lyr ? "bg-emerald-500/30 text-emerald-300 font-bold border border-emerald-400/40" : "text-slate-400 hover:text-white"
+                      }`}
+                    >
+                      {lyr.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
-      {/* CENTER HERO */}
-      <motion.div
-        className={`relative z-20 flex-1 flex flex-col justify-end pb-10 sm:pb-14 px-6 sm:px-10 max-w-4xl mx-auto w-full text-center items-center`}
-        initial={{ opacity: 0, y: 40 }}
-        animate={{
-          opacity: isTransitioning ? 0 : 1,
-          y: isTransitioning ? -30 : 0,
-          scale: isTransitioning ? 0.92 : 1
-        }}
-        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-      >
-        {/* Product Pill */}
-        <motion.div
-          className="inline-flex items-center space-x-2 px-4 py-2 rounded-full border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm mb-6"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.3, duration: 0.5 }}
-        >
-          <motion.div
-            animate={{ rotate: [0, 180, 360] }}
-            transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
-          >
-            <Sparkles className="w-3.5 h-3.5 text-cyan-400/70" />
-          </motion.div>
-          <span className="text-[11px] tracking-widest text-slate-400 uppercase font-light">
-            AI-Powered Cardiac Intelligence
-          </span>
-        </motion.div>
-
-        {/* Main Tagline */}
-        <motion.h1
-          className="text-4xl sm:text-6xl md:text-7xl font-extralight tracking-tight text-white mb-4 leading-[1.05]"
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-        >
-          See Beyond the{" "}
-          <motion.span
-            className="font-normal text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-teal-200 to-sky-400"
-            animate={{
-              backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"]
-            }}
-            transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
-            style={{ backgroundSize: "200% 200%" }}
-          >
-            Heartbeat.
-          </motion.span>
-        </motion.h1>
-
-        <motion.p
-          className="max-w-xl text-sm sm:text-base text-slate-400 font-light leading-relaxed mb-6"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5, duration: 0.6 }}
-        >
-          Automated LVEF quantification, endocardial segmentation, and
-          explainable AI heatmaps — in seconds.
-        </motion.p>
-
-        {/* Viewpoint & Rhythm Modulation Controls */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-8">
-          {/* Cardiac Rhythm */}
-          <div className="flex items-center space-x-1.5">
-            <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest mr-1 flex items-center space-x-1">
-              <Activity className="w-3 h-3 text-cyan-400/80" />
-              <span>Rhythm:</span>
-            </span>
-            {RHYTHMS.map((r) => (
-              <button
-                key={r.id}
-                onClick={() => handleSelectRhythm(r.bpm)}
-                className={`px-2.5 py-1 rounded-full text-[10px] font-mono transition cursor-pointer border ${
-                  bpm === r.bpm
-                    ? "bg-cyan-950/80 border-cyan-400 text-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.3)]"
-                    : "bg-white/[0.02] border-white/10 text-slate-400 hover:text-white"
-                }`}
-              >
-                {r.label.split(" (")[0]}
-              </button>
-            ))}
-          </div>
-
-          <div className="hidden sm:block w-px h-4 bg-white/10" />
-
-          {/* Camera Viewpoint */}
-          <div className="flex items-center space-x-1.5">
-            <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest mr-1 flex items-center space-x-1">
-              <Eye className="w-3 h-3 text-cyan-400/80" />
-              <span>3D View:</span>
-            </span>
-            {ANGLES.map((a) => (
-              <button
-                key={a.id}
-                onClick={() => setCameraAngle(a.id)}
-                title={a.label}
-                className={`px-2.5 py-1 rounded-full text-[10px] font-mono transition cursor-pointer border ${
-                  cameraAngle === a.id
-                    ? "bg-cyan-950/80 border-cyan-400 text-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.3)]"
-                    : "bg-white/[0.02] border-white/10 text-slate-400 hover:text-white"
-                }`}
-              >
-                {a.tag || a.id.toUpperCase()}
-              </button>
-            ))}
-          </div>
-
-          <div className="hidden sm:block w-px h-4 bg-white/10" />
-
-          {/* Anatomical Dissection Layer Mode */}
-          <div className="flex items-center space-x-1.5">
-            <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest mr-1 flex items-center space-x-1">
-              <Sparkles className="w-3 h-3 text-cyan-400/80" />
-              <span>Layer:</span>
-            </span>
-            {LAYERS.map((lyr) => (
-              <button
-                key={lyr.id}
-                onClick={() => setAnatomicalLayer(lyr.id)}
-                className={`px-2.5 py-1 rounded-full text-[10px] font-mono transition cursor-pointer border ${
-                  anatomicalLayer === lyr.id
-                    ? "bg-cyan-950/80 border-cyan-400 text-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.3)]"
-                    : "bg-white/[0.02] border-white/10 text-slate-400 hover:text-white"
-                }`}
-              >
-                {lyr.id.toUpperCase()}
-              </button>
-            ))}
-          </div>
-
-          <div className="hidden sm:block w-px h-4 bg-white/10" />
-
-          {/* Cardiac Cycle Phase Mode */}
-          <div className="flex items-center space-x-1.5">
-            <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest mr-1 flex items-center space-x-1">
-              <Activity className="w-3 h-3 text-cyan-400/80" />
-              <span>Phase:</span>
-            </span>
-            {PHASES.map((p) => (
-              <button
-                key={p.id}
-                onClick={() => setCardiacPhase(p.id)}
-                title={p.label}
-                className={`px-2.5 py-1 rounded-full text-[10px] font-mono transition cursor-pointer border ${
-                  cardiacPhase === p.id
-                    ? "bg-cyan-950/80 border-cyan-400 text-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.3)] font-bold"
-                    : "bg-white/[0.02] border-white/10 text-slate-400 hover:text-white"
-                }`}
-              >
-                {p.tag}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* ENTER BUTTON */}
-        <motion.button
-          onClick={handleStartTransition}
-          disabled={isTransitioning}
-          className="group relative px-10 py-4.5 rounded-2xl bg-white text-slate-950 font-medium text-sm tracking-wide cursor-pointer overflow-hidden"
-          whileHover={{
-            scale: 1.03,
-            boxShadow: "0 0 50px rgba(255,255,255,0.2), 0 0 100px rgba(6,182,212,0.15)"
-          }}
-          whileTap={{ scale: 0.97 }}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6, duration: 0.5 }}
-        >
-          <div className="absolute inset-0 w-1/3 h-full bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-12 -translate-x-full group-hover:translate-x-[400%] transition-transform duration-1000 ease-out" />
-          <div className="relative flex items-center space-x-3">
-            <span>Enter Analysis Studio</span>
+            {/* ========================================================
+                FLOATING CARD 1: BLOOD STATUS (96 bpm + Animated EKG)
+                ======================================================== */}
             <motion.div
-              animate={{ x: [0, 4, 0] }}
-              transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+              style={{
+                x: mousePos.x * 1.5,
+                y: mousePos.y * 1.5,
+                rotateX: cardTilt.rx,
+                rotateY: cardTilt.ry
+              }}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.25, duration: 0.6 }}
+              className="absolute top-[16%] sm:top-[22%] left-[6%] sm:left-[12%] z-30 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-br from-[#3b181a]/85 via-[#261012]/80 to-[#160a0c]/90 border border-white/20 backdrop-blur-xl shadow-[0_15px_40px_rgba(0,0,0,0.7)] min-w-[140px] sm:min-w-[165px]"
             >
-              <ArrowRight className="w-4 h-4" />
+              <div className="flex items-center space-x-1.5 mb-1 text-slate-300 text-[10px] sm:text-[11px] font-medium">
+                <Heart className="w-3.5 h-3.5 text-rose-400 fill-rose-400/40 animate-pulse" />
+                <span>Blood Status</span>
+              </div>
+              <div className="text-xl sm:text-2xl font-bold text-white tracking-tight font-sans">
+                {bpm} <span className="text-xs font-normal text-slate-400">bpm</span>
+              </div>
+
+              {/* LIVE CONTINUOUSLY ANIMATED EKG WAVEFORM */}
+              <div className="w-full h-6 mt-1.5 overflow-hidden relative">
+                <svg viewBox="0 0 120 24" className="w-full h-full">
+                  <path
+                    d="M 0 14 L 20 14 L 28 14 L 32 8 L 36 22 L 40 2 L 44 18 L 48 14 L 60 14 L 80 14 L 88 14 L 92 8 L 96 22 L 100 2 L 104 18 L 108 14 L 120 14"
+                    fill="none"
+                    stroke="#f43f5e"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <animate
+                      attributeName="stroke-dasharray"
+                      values="0,120; 120,0; 0,120"
+                      dur="2.2s"
+                      repeatCount="indefinite"
+                    />
+                  </path>
+                </svg>
+              </div>
             </motion.div>
+
+            {/* ========================================================
+                FLOATING CARD 2: BLOOD COUNT (80 / 100 + Sine Waveform)
+                ======================================================== */}
+            <motion.div
+              style={{
+                x: mousePos.x * 1.8,
+                y: mousePos.y * 1.8,
+                rotateX: cardTilt.rx,
+                rotateY: cardTilt.ry
+              }}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.45, duration: 0.6 }}
+              className="absolute bottom-[20%] sm:bottom-[24%] right-[4%] sm:right-[10%] z-30 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-br from-[#3b2318]/85 via-[#261810]/80 to-[#160f0a]/90 border border-white/20 backdrop-blur-xl shadow-[0_15px_40px_rgba(0,0,0,0.7)] min-w-[150px] sm:min-w-[175px]"
+            >
+              <div className="flex items-center space-x-1.5 mb-1 text-slate-300 text-[10px] sm:text-[11px] font-medium">
+                <Activity className="w-3.5 h-3.5 text-amber-400" />
+                <span>Blood Count</span>
+              </div>
+              <div className="text-xl sm:text-2xl font-bold text-white tracking-tight font-sans">
+                {bloodCount} <span className="text-xs font-normal text-slate-400">/ 100</span>
+              </div>
+
+              {/* LIVE ANIMATED SINE WAVE WITH GLOWING BEACON NODE */}
+              <div className="w-full h-6 mt-1.5 overflow-hidden relative">
+                <svg viewBox="0 0 120 24" className="w-full h-full">
+                  <path
+                    d="M 0 14 C 20 14, 25 6, 40 6 C 55 6, 65 20, 80 20 C 95 20, 105 10, 120 10"
+                    fill="none"
+                    stroke="#fbbf24"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                  />
+                  {/* Glowing Node Traveling on Spline */}
+                  <circle cx="85" cy="18" r="3.5" fill="#ffffff" stroke="#fbbf24" strokeWidth="1.5">
+                    <animate
+                      attributeName="r"
+                      values="3; 4.8; 3"
+                      dur="1.4s"
+                      repeatCount="indefinite"
+                    />
+                  </circle>
+                </svg>
+              </div>
+            </motion.div>
+
           </div>
-        </motion.button>
+        </div>
+
+        {/* ========================================================
+            BOTTOM BAR:
+            LEFT: FLOATING UTILITY PILL (Audio, Fullscreen, Presets, Sliders)
+            RIGHT: "Dedicated to healthier hearts..." + VIBRANT LIME BUTTON
+            ======================================================== */}
+        <footer className="relative z-20 flex flex-col sm:flex-row items-center justify-between w-full pt-4 gap-4">
+          
+          {/* Bottom-Center Floating Utility Bar */}
+          <div className="flex items-center space-x-2 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.08] backdrop-blur-md text-slate-400">
+            {/* Audio Toggle */}
+            <button
+              onClick={toggleAudio}
+              className={`p-1.5 rounded-full hover:text-white transition cursor-pointer ${
+                audioEnabled ? "text-cyan-400 bg-cyan-950/60" : ""
+              }`}
+              title={audioEnabled ? "Mute Heartbeat Sound" : "Enable Web Audio S1/S2 Sound"}
+            >
+              {audioEnabled ? <Volume2 size={14} className="animate-pulse" /> : <VolumeX size={14} />}
+            </button>
+
+            {/* Rhythm Modulation Pill */}
+            <button
+              onClick={() => handleBpmChange(bpm === 96 ? 72 : (bpm === 72 ? 110 : 96))}
+              className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/[0.03] hover:bg-white/[0.08] text-slate-300 transition cursor-pointer"
+              title="Cycle Rhythm (72, 96, 110 BPM)"
+            >
+              {bpm} BPM
+            </button>
+
+            {/* Fullscreen Toggle */}
+            <button
+              onClick={toggleFullscreen}
+              className="p-1.5 rounded-full hover:text-white transition cursor-pointer"
+              title="Toggle Fullscreen Bezel"
+            >
+              {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+            </button>
+
+            {/* Presets Quick Menu Toggle */}
+            <button
+              onClick={() => setShowPresetsMenu(!showPresetsMenu)}
+              className="flex items-center space-x-1 px-2.5 py-1 rounded-full text-[10px] font-mono text-cyan-300 bg-cyan-950/40 hover:bg-cyan-900/60 border border-cyan-500/30 transition cursor-pointer"
+              title="Quick Examiner Cases"
+            >
+              <span>Cases</span>
+              <ChevronRight size={10} className={showPresetsMenu ? "rotate-90" : ""} />
+            </button>
+          </div>
+
+          {/* Bottom-Right: Call-to-Action with Neon Green Glow */}
+          <div className="flex items-center space-x-4 sm:space-x-6">
+            <span className="hidden md:inline-block text-xs text-slate-400 font-light max-w-[140px] text-right leading-tight">
+              Dedicated to healthier hearts, every day
+            </span>
+
+            {/* VIBRANT LIME GREEN PILL BUTTON (EXACT MATCH) */}
+            <motion.button
+              onClick={handleLaunchStudio}
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
+              className="px-8 sm:px-10 py-3.5 rounded-full bg-[#84cc16] hover:bg-[#9ae600] text-black font-bold text-sm tracking-wide cursor-pointer transition-all duration-200 shadow-[0_10px_35px_rgba(132,204,22,0.45)] hover:shadow-[0_12px_45px_rgba(132,204,22,0.7)]"
+            >
+              Book Consultation
+            </motion.button>
+          </div>
+        </footer>
+
       </motion.div>
 
-      {/* Bottom Footer */}
-      <motion.footer
-        className={`relative z-20 px-8 sm:px-10 py-4 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-500 font-light tracking-wide gap-2`}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: isTransitioning ? 0 : 1 }}
-        transition={{ delay: 0.7, duration: 0.5 }}
-      >
-        <span>Stanford EchoNet-Dynamic · 10,030 Cases</span>
-        <div className="flex items-center space-x-4">
-          <span className="flex items-center space-x-1.5 font-mono text-[10px] text-cyan-400/80">
-            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
-            <span>Active Rhythm: {bpm} BPM</span>
-          </span>
-          <span>MAE 4.18% · AHA/ASE Compliant</span>
+      {/* ========================================================
+          POPUP MODAL 1: EXAMINER PRESETS QUICK LAUNCH
+          ======================================================== */}
+      {showPresetsMenu && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 w-80 bg-[#0f1422] border border-cyan-500/40 rounded-2xl p-4 shadow-[0_20px_50px_rgba(0,0,0,0.9)] backdrop-blur-xl">
+          <div className="flex justify-between items-center mb-3 text-xs font-bold text-cyan-300">
+            <span>EXAMINER TEST PRESETS</span>
+            <button onClick={() => setShowPresetsMenu(false)} className="text-slate-400 hover:text-white">✕</button>
+          </div>
+          <div className="space-y-2">
+            {[
+              { id: "0X1002E8FBACD08477.avi", label: "🟢 Normal Preserved LVEF (59.1%)", sub: "Case #1002 • Normal kinetics" },
+              { id: "0X101026B90DAE7E95.avi", label: "🟡 Mildly Reduced HFmrEF (46.8%)", sub: "Case #1010 • Impaired relaxation" },
+              { id: "0X10094BA0A028EAC3.avi", label: "🔴 Severely Reduced HFrEF (24.9%)", sub: "Case #1009 • Systolic failure" }
+            ].map((c, i) => (
+              <button
+                key={i}
+                onClick={handleLaunchStudio}
+                className="w-full text-left p-2.5 rounded-xl bg-slate-900/80 hover:bg-cyan-950/60 border border-slate-800 hover:border-cyan-500/40 transition cursor-pointer"
+              >
+                <div className="text-xs font-bold text-white">{c.label}</div>
+                <div className="text-[10px] text-slate-400">{c.sub}</div>
+              </button>
+            ))}
+          </div>
         </div>
-      </motion.footer>
+      )}
+
+      {/* ========================================================
+          POPUP MODAL 2: "READ OUR STORY"
+          ======================================================== */}
+      {activeStoryModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="w-full max-w-xl bg-[#0d121f] border border-white/10 rounded-3xl p-8 relative shadow-[0_25px_60px_rgba(0,0,0,0.9)] text-slate-200"
+          >
+            <button
+              onClick={() => setActiveStoryModal(false)}
+              className="absolute top-6 right-6 p-2 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white cursor-pointer"
+            >
+              <X size={16} />
+            </button>
+            <div className="w-10 h-10 rounded-full bg-[#84cc16]/20 text-[#84cc16] flex items-center justify-center font-bold text-lg mb-4">
+              +
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-2">The Genesis of EchoCard-AI</h2>
+            <p className="text-sm text-slate-400 leading-relaxed mb-4">
+              Heart failure affects over 64 million people globally. Manual echocardiography assessment suffers from 6.8% to 8.2% inter-observer variability between certified cardiologists.
+            </p>
+            <p className="text-sm text-slate-400 leading-relaxed mb-6">
+              EchoCard-AI bridges this diagnostic gap with a 3D spatiotemporal ResNet-18 model trained across 10,030 Stanford Medicine echocardiogram videos. By capturing both spatial endocardial contours and 32 frames of temporal torsion, it delivers instantaneous LVEF quantification, automated Simpson's volumetry, and 3D Grad-CAM explainability.
+            </p>
+            <button
+              onClick={() => {
+                setActiveStoryModal(false)
+                handleLaunchStudio()
+              }}
+              className="w-full py-3 rounded-full bg-[#84cc16] text-black font-bold text-sm tracking-wide cursor-pointer hover:bg-[#9ae600] transition"
+            >
+              Launch PACS Studio & Test Models
+            </button>
+          </motion.div>
+        </div>
+      )}
+
+      {/* ========================================================
+          POPUP MODAL 3: SERVICES
+          ======================================================== */}
+      {activeServicesModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="w-full max-w-xl bg-[#0d121f] border border-white/10 rounded-3xl p-8 relative shadow-[0_25px_60px_rgba(0,0,0,0.9)] text-slate-200"
+          >
+            <button
+              onClick={() => setActiveServicesModal(false)}
+              className="absolute top-6 right-6 p-2 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white cursor-pointer"
+            >
+              <X size={16} />
+            </button>
+            <h2 className="text-xl font-bold text-white mb-4">Clinical Cardiology AI Services</h2>
+            <div className="space-y-3 mb-6">
+              <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                <div className="text-xs font-bold text-cyan-300">1. Automated LVEF Quantification</div>
+                <div className="text-xs text-slate-400 mt-1">3D Spatiotemporal CNN analyzing 32-frame cineloops with Monte Carlo uncertainty estimation.</div>
+              </div>
+              <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                <div className="text-xs font-bold text-emerald-300">2. Single-Plane & Biplane Simpson's Volumetry</div>
+                <div className="text-xs text-slate-400 mt-1">Automatic endocardial boundary detection calculating EDV (mL), ESV (mL), and Stroke Volume.</div>
+              </div>
+              <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                <div className="text-xs font-bold text-amber-300">3. 3D Grad-CAM Neural Attention Maps</div>
+                <div className="text-xs text-slate-400 mt-1">Zero-hallucination verification proving model attends to ventricular wall contraction.</div>
+              </div>
+              <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                <div className="text-xs font-bold text-rose-300">4. FAISS Precedent Case Retrieval</div>
+                <div className="text-xs text-slate-400 mt-1">Latent embeddings indexed across Stanford's 10,030-patient repository for morphological matching.</div>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                setActiveServicesModal(false)
+                handleLaunchStudio()
+              }}
+              className="w-full py-3 rounded-full bg-[#84cc16] text-black font-bold text-sm tracking-wide cursor-pointer hover:bg-[#9ae600] transition"
+            >
+              Test Live Services in Studio
+            </button>
+          </motion.div>
+        </div>
+      )}
+
+      {/* ========================================================
+          POPUP MODAL 4: PLANS / PACS TIERS
+          ======================================================== */}
+      {activePlansModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="w-full max-w-xl bg-[#0d121f] border border-white/10 rounded-3xl p-8 relative shadow-[0_25px_60px_rgba(0,0,0,0.9)] text-slate-200"
+          >
+            <button
+              onClick={() => setActivePlansModal(false)}
+              className="absolute top-6 right-6 p-2 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white cursor-pointer"
+            >
+              <X size={16} />
+            </button>
+            <h2 className="text-xl font-bold text-white mb-2">Hospital & Research Deployment Plans</h2>
+            <p className="text-xs text-slate-400 mb-6">Designed for clinical echocardiography laboratories and academic research.</p>
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.08]">
+                <div className="text-xs font-bold text-white uppercase">Clinical PACS</div>
+                <div className="text-lg font-extrabold text-[#84cc16] mt-1">DICOM PS 3.3</div>
+                <div className="text-[11px] text-slate-400 mt-2">HL7 integration, automated report generation, cardiologist sign-off workflow.</div>
+              </div>
+              <div className="p-4 rounded-2xl bg-white/[0.02] border border-cyan-500/30 bg-cyan-950/20">
+                <div className="text-xs font-bold text-cyan-300 uppercase">Research Suite</div>
+                <div className="text-lg font-extrabold text-cyan-400 mt-1">Open Weights</div>
+                <div className="text-[11px] text-slate-400 mt-2">Stanford EchoNet benchmark, nnU-Net baseline comparison, raw tensor export.</div>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                setActivePlansModal(false)
+                handleLaunchStudio()
+              }}
+              className="w-full py-3 rounded-full bg-[#84cc16] text-black font-bold text-sm tracking-wide cursor-pointer hover:bg-[#9ae600] transition"
+            >
+              Continue to Studio
+            </button>
+          </motion.div>
+        </div>
+      )}
+
+      {/* ========================================================
+          POPUP MODAL 5: ABOUT
+          ======================================================== */}
+      {activeAboutModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="w-full max-w-lg bg-[#0d121f] border border-white/10 rounded-3xl p-8 relative shadow-[0_25px_60px_rgba(0,0,0,0.9)] text-slate-200"
+          >
+            <button
+              onClick={() => setActiveAboutModal(false)}
+              className="absolute top-6 right-6 p-2 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white cursor-pointer"
+            >
+              <X size={16} />
+            </button>
+            <h2 className="text-xl font-bold text-white mb-2">H+ MEDICAL • EchoCard-AI</h2>
+            <div className="text-xs text-slate-400 space-y-2.5 mb-6">
+              <p>• <strong>Core Model:</strong> 3D ResNet-18 (33,176,405 parameters) trained on 10,030 apical 4-chamber ultrasound cineloops.</p>
+              <p>• <strong>Screening Metric:</strong> 94.3% diagnostic screening accuracy (AUC 0.94) for detecting EF &lt; 50%.</p>
+              <p>• <strong>Validation Benchmark:</strong> MAE 4.18% on held-out test splits, exceeding certified human inter-observer agreement.</p>
+              <p>• <strong>Cross-Vendor Test:</strong> Verified zero-shot generalization against the European CAMUS dataset (GE Healthcare & Philips).</p>
+            </div>
+            <button
+              onClick={() => {
+                setActiveAboutModal(false)
+                handleLaunchStudio()
+              }}
+              className="w-full py-3 rounded-full bg-[#84cc16] text-black font-bold text-sm tracking-wide cursor-pointer hover:bg-[#9ae600] transition"
+            >
+              Enter Analysis Studio
+            </button>
+          </motion.div>
+        </div>
+      )}
+
     </div>
   )
 }
