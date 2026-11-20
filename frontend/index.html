@@ -3,22 +3,69 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EchoCard-AI — Clinical Echocardiography Intelligence Platform</title>
+  <title>EchoNet-AI: Automated Cardiac Ejection Fraction Estimation Using Deep Learning</title>
+  <meta name="description" content="An AI-powered approach to automated cardiac function assessment using deep learning and echocardiographic analysis." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&family=Geist:wght@400;500&display=swap" rel="stylesheet">
   <style>
-    body {
-      background-color: #040711;
-      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    :root {
+      --bg-0: #050507;
+      --bg-1: #0B0B12;
+      --bg-2: #12121E;
+      --glass: rgba(255, 255, 255, 0.035);
+      --glass-hover: rgba(255, 255, 255, 0.065);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --glass-border-focus: rgba(134, 85, 255, 0.40);
+      --glass-highlight: rgba(255, 255, 255, 0.12);
+      --glass-shadow: rgba(134, 85, 255, 0.08);
+
+      --violet: #8655FF;
+      --violet-soft: #A78BFA;
+      --blue: #4C8DFF;
+      --ice: #7FD6FF;
+
+      --white: #F5F5F7;
+      --muted: #A1A1B0;
+      --dim: #525266;
+
+      --pulse: #FF4D6D;
+      --amber: #E8B84A;
+      --ok: #3DDC97;
+      --danger: #E03131;
+
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 16px;
+      --space-4: 24px;
+      --space-5: 32px;
+      --space-6: 48px;
+      --space-7: 64px;
     }
-    code, pre, .font-mono {
-      font-family: 'JetBrains Mono', monospace;
+
+    body {
+      background-color: var(--bg-0);
+      color: var(--white);
+      font-family: 'Geist', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    code, pre, .font-mono, [data-mono="true"] {
+      font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    ::selection {
+      background: rgba(134, 85, 255, 0.35);
+      color: var(--white);
     }
   </style>
 </head>
-<body class="bg-[#040711] text-slate-100 overflow-x-hidden antialiased">
+<body class="bg-[#050507] text-[#F5F5F7] overflow-x-hidden antialiased">
   <div id="root"></div>
-  <script type="module" src="/src/main.jsx"></script>
+  <script type="module" src="/src/main.tsx"></script>
 </body>
 </html>
