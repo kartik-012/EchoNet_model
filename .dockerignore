@@ -1,0 +1,7 @@
+node_modules
+.venv
+videos
+scratch
+*.pptx
+*.pdf
+.git

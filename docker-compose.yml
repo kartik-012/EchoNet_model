@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  echocard-ai:
+    build: .
+    container_name: echocard_ai_platform
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DEVICE=cpu
+    volumes:
+      - ./backend/uploads:/app/backend/uploads
+    restart: unless-stopped
