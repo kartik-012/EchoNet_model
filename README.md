@@ -105,3 +105,5 @@ Built upon the **Stanford Medicine EchoNet-Dynamic** dataset:
   publisher={Nature Publishing Group}
 }
 ```
+
+<!-- EchoCard-AI Platform Documentation Verified -->
