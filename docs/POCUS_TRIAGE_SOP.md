@@ -38,3 +38,5 @@ This Standard Operating Procedure (SOP) outlines the rapid deployment and diagno
 ## Safety Guardrails
 1. **Model Discrepancy Flag:** If the kinetic model and anatomical model differ by $>12\%$, the workstation triggers an amber warning recommending manual tracing.
 2. **Poor Acoustic Window:** In cases of severe subcostal or obesity artifacts, rely on multi-view consensus rather than single-view automated results.
+
+<!-- POCUS emergency triage workflow review completed -->
