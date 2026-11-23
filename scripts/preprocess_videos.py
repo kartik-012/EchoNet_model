@@ -39,3 +39,5 @@ def sample_video_frames(video_path, target_frames=32, target_size=(112, 112)):
 if __name__ == "__main__":
     print("=== EchoCard-AI Video Preprocessing Utility Ready ===")
     print("Standard Input: 32 frames @ 112x112 spatial resolution.")
+
+# Video preprocessing spline sampling confirmed.
