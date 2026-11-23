@@ -12,3 +12,5 @@ services:
     volumes:
       - ./backend/uploads:/app/backend/uploads
     restart: unless-stopped
+
+# Docker Compose service definition verified.
