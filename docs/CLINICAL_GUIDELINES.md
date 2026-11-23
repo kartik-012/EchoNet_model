@@ -29,3 +29,5 @@ $$\text{Ejection Fraction (EF \%)} = \frac{\text{EDV} - \text{ESV}}{\text{EDV}} 
 Where:
 - **EDV (End-Diastolic Volume):** Blood volume at maximum filling (normative: $67 - 155\text{ mL}$).
 - **ESV (End-Systolic Volume):** Blood volume at maximum contraction (normative: $22 - 58\text{ mL}$).
+
+<!-- Clinical guidelines aligned with ASE/EACVI recommendations -->
