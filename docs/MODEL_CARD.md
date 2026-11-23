@@ -41,3 +41,5 @@
 ## Intended Use & Clinical Scope
 - Point-of-Care triage decision support for emergency departments, ICUs, and general outpatient clinics.
 - Intended to aid board-certified physicians, not replace clinical judgment.
+
+<!-- Model card verified for R3D-18 and nnU-Net v2 -->
