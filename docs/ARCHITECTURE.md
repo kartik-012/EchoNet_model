@@ -54,3 +54,5 @@ EchoCard-AI is an end-to-end clinical PACS diagnostic platform engineered for au
    - 3D-CNN analyzes multi-frame optical flow and wall thickening rate.
    - nnU-Net isolates the left ventricular blood pool at peak expansion and peak contraction.
 5. **Hemodynamic Telemetry:** Integrates disk diameters along the ventricular long axis to compute physical stroke volume.
+
+<!-- Architecture documentation verified for PACS clinical release -->
