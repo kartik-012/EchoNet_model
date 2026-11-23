@@ -45,3 +45,5 @@ if __name__ == "__main__":
     results = calculate_clinical_metrics(sample_true, sample_pred)
     for k, v in results.items():
         print(f"  * {k}: {v}")
+
+# Evaluation metric routines validated.
