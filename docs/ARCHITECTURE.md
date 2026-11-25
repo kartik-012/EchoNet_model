@@ -56,3 +56,5 @@ EchoCard-AI is an end-to-end clinical PACS diagnostic platform engineered for au
 5. **Hemodynamic Telemetry:** Integrates disk diameters along the ventricular long axis to compute physical stroke volume.
 
 <!-- Architecture documentation verified for PACS clinical release -->
+
+<!-- Spatiotemporal tensor pipeline release note verified -->
