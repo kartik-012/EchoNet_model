@@ -47,3 +47,5 @@ if __name__ == "__main__":
         print(f"  * {k}: {v}")
 
 # Evaluation metric routines validated.
+
+# Batch evaluation metric summary validated.
