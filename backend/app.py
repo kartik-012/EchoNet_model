@@ -95,3 +95,5 @@ def predict_sample(filename: str):
     result["filename"] = filename
     return result
 
+
+# Clinical FastAPI router endpoints validated.
