@@ -57,3 +57,5 @@ The EchoCard-AI backend is exposed via high-throughput FastAPI asynchronous endp
 ```
 
 <!-- REST API specifications validated -->
+
+<!-- Telemetry response schema validation complete -->
