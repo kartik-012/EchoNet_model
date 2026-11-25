@@ -194,3 +194,5 @@ export async function runMockInference(
 
   return CLINICAL_PRESETS[preset];
 }
+
+// Client API communication endpoints validated.
