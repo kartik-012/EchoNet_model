@@ -98,3 +98,5 @@ export const Footer: React.FC = () => {
     </footer>
   );
 };
+
+// PACS footer clinical citation references verified.
