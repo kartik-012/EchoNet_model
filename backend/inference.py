@@ -603,3 +603,5 @@ def process_echocardiogram(media_path: str, original_filename: str = ""):
             "screening_accuracy": "94.3%"
         }
     }
+
+# Spatiotemporal inference tensor hooks confirmed.
