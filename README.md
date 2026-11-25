@@ -107,3 +107,5 @@ Built upon the **Stanford Medicine EchoNet-Dynamic** dataset:
 ```
 
 <!-- EchoCard-AI Platform Documentation Verified -->
+
+<!-- Point-of-Care Echocardiography Platform Verified -->
