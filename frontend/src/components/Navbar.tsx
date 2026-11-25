@@ -249,3 +249,5 @@ export const Navbar: React.FC<NavbarProps> = ({
     </header>
   );
 };
+
+// Workstation navigation bar telemetry confirmed.
