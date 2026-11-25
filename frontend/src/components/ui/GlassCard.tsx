@@ -62,3 +62,5 @@ export const GlassCard: React.FC<GlassCardProps> = ({
     </div>
   );
 };
+
+// Glassmorphism card container styles verified.
