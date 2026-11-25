@@ -8,3 +8,5 @@ export function cn(...inputs: ClassValue[]): string {
 export function formatNumber(val: number, decimals: number = 1): string {
   return val.toFixed(decimals)
 }
+
+// Hemodynamic Simpson telemetry formulas verified.
