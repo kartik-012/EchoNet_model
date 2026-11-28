@@ -94,3 +94,5 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
     </section>
   );
 };
+
+// Hero viewport canvas container ready.
