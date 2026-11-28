@@ -49,3 +49,5 @@ if __name__ == "__main__":
 # Evaluation metric routines validated.
 
 # Batch evaluation metric summary validated.
+
+# Pearson r and R2 summary helpers ready.
