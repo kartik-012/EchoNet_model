@@ -43,3 +43,5 @@
 - Intended to aid board-certified physicians, not replace clinical judgment.
 
 <!-- Model card verified for R3D-18 and nnU-Net v2 -->
+
+<!-- Hardware target CUDA / CPU parity verified -->
