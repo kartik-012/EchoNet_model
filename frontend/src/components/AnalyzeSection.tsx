@@ -377,3 +377,5 @@ export const AnalyzeSection: React.FC<AnalyzeSectionProps> = ({
     </section>
   );
 };
+
+// Echocardiogram upload and stream staging ready.
