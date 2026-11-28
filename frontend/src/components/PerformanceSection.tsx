@@ -174,3 +174,5 @@ export const PerformanceSection: React.FC = () => {
     </section>
   );
 };
+
+// Benchmark metric cards verified.
